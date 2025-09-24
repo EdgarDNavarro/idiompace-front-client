@@ -6,7 +6,7 @@ export function ProtectedLayout() {
     const { data, isPending } = authClient.useSession();
 
     if (isPending) return <p>Cargando...</p>;
-    console.log(data);
+    console.log({data});
     
     if (!data) return <Navigate to="/login" replace />;
 
