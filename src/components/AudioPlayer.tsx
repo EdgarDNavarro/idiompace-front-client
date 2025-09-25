@@ -18,7 +18,7 @@ export const AudioPlayer = ({
 }: AudioPlayerProps) => {
     const { audioRef, isPlaying, currentTime, duration, play, pause, seek } =
         useAudio(
-            `http://192.168.1.10:9010/idiompace/${
+            `https://minios.dnavarro.dev/idiompace/${
                 story.level
             }/${encodeURIComponent(story.title)}.mp3`
         );
