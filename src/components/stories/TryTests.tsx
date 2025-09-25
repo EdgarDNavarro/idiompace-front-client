@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Test } from "../../schemas";
 import { createFlashcard } from "../../services/flashcards";
+import { Eye, EyeOff } from "lucide-react";
 
 type TryTestsProps = {
     tests: Test[];
@@ -15,6 +16,8 @@ function normalize(str: string) {
 }
 
 const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
+    const [showExample, setShowExample] = useState<{ [id: number]: boolean }>({});
+
     const [inputs, setInputs] = useState<string[]>(
         Array(tests.length).fill("")
     );
@@ -63,6 +66,13 @@ const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
         }
     };
 
+    const handleToggleExample = (id: number) => {
+        setShowExample(prev => ({
+            ...prev,
+            [id]: !prev[id],
+        }));
+    };
+
     return (
         <div className="w-full max-w-4xl mx-auto mt-10 space-y-6">
             <h2 className="text-xl font-bold text-gray-100 mb-4">
@@ -94,6 +104,20 @@ const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
                                 }
                                 placeholder="Escribe la traducción"
                             />
+
+                            <button
+                                className="flex items-center gap-1 text-green-400 hover:text-green-300 text-xs mb-2"
+                                onClick={() => handleToggleExample(test.id!)}
+                            >
+                                {showExample[test.id!] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                {showExample[test.id!] ? "Ocultar ejemplo" : "Ver ejemplo"}
+                            </button>
+
+                            {showExample[test.id!] && (
+                                <div className="bg-neutral-800 rounded p-2 text-green-200 text-sm mb-2">
+                                    {test.phrase}
+                                </div>
+                            )}
 
                             {!correct[idx] && (
                                 <button
