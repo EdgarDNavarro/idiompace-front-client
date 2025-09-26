@@ -74,6 +74,18 @@ export const StoryList = () => {
                             {story.description}
                         </p>
 
+                        {/* Categorías */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {story.categories.map((cat, idx) => (
+                                <span
+                                    key={idx}
+                                    className="bg-green-800/30 text-green-300 px-2 py-0.5 rounded-full text-xs font-medium border border-green-700"
+                                >
+                                    {cat}
+                                </span>
+                            ))}
+                        </div>
+
                         {/* Footer */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4 text-sm text-gray-500">

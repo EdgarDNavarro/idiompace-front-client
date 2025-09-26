@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Test } from "../../schemas";
 import { createFlashcard } from "../../services/flashcards";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Flag } from "lucide-react";
 
 type TryTestsProps = {
     tests: Test[];
@@ -56,8 +56,7 @@ const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
                 back: test.answer,
                 example: test.phrase,
             };
-            const response = await createFlashcard(flashcardData);
-            console.log("Flashcard created:", response);
+            await createFlashcard(flashcardData);
             const newCreated = [...created];
             newCreated[idx] = true;
             setCreated(newCreated);
@@ -73,9 +72,23 @@ const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
         }));
     };
 
+    const giveUp = (idx: number) => {
+        const answer = tests[idx].answer;
+        const newInputs = [...inputs];
+        newInputs[idx] = answer;
+        setInputs(newInputs);
+
+        const newChecked = [...checked];
+        const newCorrect = [...correct];
+        newChecked[idx] = true;
+        newCorrect[idx] = true;
+        setChecked(newChecked);
+        setCorrect(newCorrect);
+    };
+
     return (
         <div className="w-full max-w-4xl mx-auto mt-10 space-y-6">
-            <h2 className="text-xl font-bold text-gray-100 mb-4">
+            <h2 className="text-xl font-bold text-gray-100 mb-4 text-center">
                 Pon a prueba tu vocabulario - Test your vocabulary
             </h2>
 
@@ -83,45 +96,58 @@ const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
                 {tests.map((test, idx) => (
                     <div
                         key={test.id ?? idx}
-                        className="bg-neutral-900 rounded-lg p-5 flex flex-col items-center gap-4 shadow border border-neutral-800"
+                        className="bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-4 shadow-lg border border-neutral-800 transition-all hover:shadow-2xl"
                     >
-                        <div className="flex-1 text-lg font-medium text-green-300 text-center md:text-left">
+                        <div className="flex-1 text-lg font-semibold text-green-300 text-center md:text-left">
                             {test.ask}
                         </div>
                         <div className="flex-1 flex flex-col items-center md:items-start gap-2 w-full">
                             <input
                                 type="text"
-                                className={`px-3 py-2 rounded border outline-none w-full bg-neutral-800 text-white ${
+                                className={`px-3 py-2 rounded-lg border outline-none w-full bg-neutral-800 text-white text-base shadow-sm transition ${
                                     checked[idx]
                                         ? correct[idx]
-                                            ? "border-green-500"
-                                            : "border-red-500"
-                                        : "border-neutral-700"
+                                            ? "border-green-500 ring-2 ring-green-400"
+                                            : "border-red-500 ring-2 ring-red-400"
+                                        : "border-neutral-700 focus:border-green-400"
                                 }`}
                                 value={inputs[idx]}
                                 onChange={(e) =>
                                     handleInputChange(idx, e.target.value)
                                 }
                                 placeholder="Escribe la traducción"
+                                disabled={checked[idx] && correct[idx]}
                             />
 
-                            <button
-                                className="flex items-center gap-1 text-green-400 hover:text-green-300 text-xs mb-2"
-                                onClick={() => handleToggleExample(test.id!)}
-                            >
-                                {showExample[test.id!] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                {showExample[test.id!] ? "Ocultar ejemplo" : "Ver ejemplo"}
-                            </button>
+                            <div className="flex gap-2 w-full">
+                                <button
+                                    className="flex items-center gap-1 text-green-400 hover:text-green-300 text-xs"
+                                    onClick={() => handleToggleExample(test.id!)}
+                                    type="button"
+                                >
+                                    {showExample[test.id!] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    {showExample[test.id!] ? "Ocultar ejemplo" : "Ver ejemplo"}
+                                </button>
+                                <button
+                                    className="flex items-center gap-1 text-red-400 hover:text-red-300 text-xs ml-auto"
+                                    onClick={() => giveUp(idx)}
+                                    type="button"
+                                    title="Rendirse"
+                                >
+                                    <Flag className="w-4 h-4" />
+                                    Rendirse
+                                </button>
+                            </div>
 
                             {showExample[test.id!] && (
-                                <div className="bg-neutral-800 rounded p-2 text-green-200 text-sm mb-2">
+                                <div className="bg-neutral-800 rounded p-2 text-green-200 text-sm mb-2 w-full">
                                     {test.phrase}
                                 </div>
                             )}
 
                             {!correct[idx] && (
                                 <button
-                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded transition w-full"
+                                    className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-4 py-1.5 rounded-lg font-semibold shadow transition w-full mt-2"
                                     onClick={() => handleCheck(idx)}
                                 >
                                     Comprobar
@@ -130,13 +156,13 @@ const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
 
                             {checked[idx] &&
                                 (correct[idx] ? (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-green-400 font-semibold">
+                                    <div className="flex flex-col items-center gap-2 w-full">
+                                        <span className="text-green-400 font-semibold text-base">
                                             ¡Correcto!
                                         </span>
 
                                         {created[idx] ? (
-                                            <span className="text-blue-400 font-semibold">
+                                            <span className="text-blue-400 font-semibold text-xs">
                                                 Guardado en flashcards
                                             </span>
                                         ) : (
@@ -144,14 +170,14 @@ const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
                                                 className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition text-xs"
                                                 onClick={() =>
                                                     saveToFlashcards(test, idx)
-                                                } // funcionalidad futura
+                                                }
                                             >
                                                 Guardar en flashcards
                                             </button>
                                         )}
                                     </div>
                                 ) : (
-                                    <span className="text-red-400 font-semibold">
+                                    <span className="text-red-400 font-semibold text-base">
                                         Incorrecto. Try again.
                                     </span>
                                 ))}
