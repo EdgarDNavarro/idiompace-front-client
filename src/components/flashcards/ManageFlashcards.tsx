@@ -5,11 +5,16 @@ import { Link } from "react-router-dom";
 import { Eye, EyeOff, Pencil, Trash2, Plus, GraduationCap } from "lucide-react";
 import CreateFlashcardModal from "./CreateFlashcard";
 import EditFlashcardModal from "./EditFlashcard";
+import FlashcardHowItWorks from "./FlashcardHowItWorks";
 
 const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return "-";
     const date = new Date(dateStr);
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+    return (
+        date.toLocaleDateString() +
+        " " +
+        date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    );
 };
 
 const ManageFlashcards: React.FC = () => {
@@ -76,6 +81,7 @@ const ManageFlashcards: React.FC = () => {
     return (
         <div>
             <h2 className="text-2xl font-bold text-green-400 mb-6 text-center">Tus Flashcards</h2>
+            
             <button
                 onClick={() => setModalOpen(true)}
                 className="inline-flex items-center gap-2 mb-6 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition mr-4"
@@ -90,6 +96,8 @@ const ManageFlashcards: React.FC = () => {
                 <GraduationCap className="w-5 h-5 " />
                 Intentar
             </Link>
+
+            
 
             <CreateFlashcardModal
                 open={modalOpen}
@@ -118,10 +126,10 @@ const ManageFlashcards: React.FC = () => {
                             <div>
                                 <div className="text-lg font-semibold text-white mb-2 truncate">{f.front}</div>
                                 <div className="text-xs text-gray-400 mb-1">
-                                    Creada: {formatDate(f.createdAt)}
+                                    Intento anterior: {formatDate(f.lastReviewedAt)}
                                 </div>
                                 <div className="text-xs text-gray-500 mb-2">
-                                    Actualizada: {formatDate(f.updatedAt)}
+                                    Proximo intento: {formatDate(f.nextReviewAt)}
                                 </div>
                                 <button
                                     className="flex items-center gap-1 text-green-400 hover:text-green-300 text-xs mb-2"
@@ -167,6 +175,8 @@ const ManageFlashcards: React.FC = () => {
                     ))}
                 </div>
             )}
+
+            <FlashcardHowItWorks/>
         </div>
     );
 };

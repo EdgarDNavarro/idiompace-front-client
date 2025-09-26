@@ -1,9 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { signUpWithEmail } from "../../hooks/auth";
 import { Link, useNavigate } from "react-router-dom";
+import { authClient } from "../../lib/auth-client";
+import { Eye, EyeOff } from "lucide-react";
 
 const SignUp = () => {
     const navigate = useNavigate();
+
+    const {data, isPending} = authClient.useSession() 
+
+    useEffect(() => {
+        if(!isPending && data?.user){
+            navigate("/")
+        }
+
+    }, [data, isPending])
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -13,6 +24,7 @@ const SignUp = () => {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState<string | null>(null);
     const [error, setError] = useState<string | undefined>(undefined);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -74,15 +86,24 @@ const SignUp = () => {
                 </div>
                 <div>
                     <label className="block text-gray-300 mb-1">Contraseña</label>
-                    <input
-                        type="password"
-                        name="password"
-                        value={form.password}
-                        onChange={handleChange}
-                        required
-                        minLength={8}
-                        className="w-full px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white focus:outline-none"
-                    />
+                    <div className="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            required
+                            className="w-full px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white focus:outline-none pr-10"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword((v) => !v)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-400"
+                            tabIndex={-1}
+                        >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                    </div>
                 </div>
 
                 <button

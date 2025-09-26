@@ -5,7 +5,8 @@ import {
     markFlashcardWrong,
 } from "../../services/flashcards";
 import { Flashcard } from "../../schemas";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const StudyFlashcards: React.FC = () => {
     const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -70,8 +71,11 @@ const StudyFlashcards: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center min-h-[40vh]">
                 <CheckCircle2 className="w-12 h-12 text-green-400 mb-4" />
-                <h2 className="text-2xl font-bold text-green-300 mb-2">¡Has terminado tus flashcards por hoy!</h2>
-                <p className="text-gray-400">Vuelve mañana para seguir practicando.</p>
+                <h2 className="text-2xl font-bold text-green-300 mb-2">¡Has terminado tus flashcards!</h2>
+                <p className="text-gray-400">Vuelve en un rato para seguir practicando.</p>
+                <Link to={"/flashcards"} className="mt-6 inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
+                    Volver <ArrowLeft className="w-4 h-4" />
+                </Link>
             </div>
         );
     }
