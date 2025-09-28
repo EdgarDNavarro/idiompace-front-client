@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getStories } from "../services/stories";
 import { useNavigate } from "react-router-dom";
 import { Pagination } from "./Pagination";
+import ViewDailyPhrase from "./daily/ViewDailyPhrase";
 
 export const StoryList = () => {
     const [stories, setStories] = useState<Story[]>([]);
@@ -114,6 +115,8 @@ export const StoryList = () => {
             {meta && (
                 <Pagination meta={meta} onPageChange={getFromApiStories} />
             )}
+
+            <ViewDailyPhrase/>
         </div>
     );
 };

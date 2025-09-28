@@ -54,6 +54,18 @@ export const FlashcardSchema = z.object({
     updatedAt: z.string(),
 });
 
+export const DailySchema = z.object({
+    id: z.number().optional(),
+    phrase: z.string(),
+    phrase_translation: z.string(),
+    example: z.string(),
+    example_translation: z.string().optional(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+});
+
+export type Daily = z.infer<typeof DailySchema>;
+
 export type Flashcard = z.infer<typeof FlashcardSchema>;
 
 export type Test = z.infer<typeof TestSchema>;
