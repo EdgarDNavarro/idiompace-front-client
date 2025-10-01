@@ -135,7 +135,7 @@ const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
                                     title="Rendirse"
                                 >
                                     <Flag className="w-4 h-4" />
-                                    Rendirse
+                                    Ver respuesta
                                 </button>
                             </div>
 

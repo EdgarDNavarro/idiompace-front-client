@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { DailySchema, Daily } from "../../schemas";
-import { createFlashcard } from "../../services/flashcards";
 import { Sparkles, ArrowRight, PlusCircle } from "lucide-react";
 import api from "../../conf/axios";
+import CreateFlashcardModal from "../flashcards/CreateFlashcard";
 
 const ViewDailyPhrase: React.FC = () => {
     const [daily, setDaily] = useState<Daily | null>(null);
     const [loading, setLoading] = useState(true);
     const [added, setAdded] = useState(false);
+    const [modalOpen, setModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchDaily = async () => {
@@ -30,12 +31,7 @@ const ViewDailyPhrase: React.FC = () => {
     const handleAddFlashcard = async () => {
         if (!daily) return;
         try {
-            await createFlashcard({
-                front: daily.phrase,
-                back: daily.phrase_translation,
-                example: daily.example,
-            });
-            setAdded(true);
+            setModalOpen(true)
         } catch (error) {
             // Opcional: mostrar error
         }
@@ -62,6 +58,19 @@ const ViewDailyPhrase: React.FC = () => {
 
     return (
         <div className="max-w-xl mx-auto mt-10 bg-gradient-to-br from-green-900 via-neutral-900 to-green-950 border border-green-700 rounded-2xl shadow-2xl p-8">
+
+            <CreateFlashcardModal
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+                flashcard={daily ? {
+                        front: daily.phrase,
+                        back: daily.phrase_translation,
+                        example: `${daily.example} - ${daily.example_translation} `
+                    } : undefined
+                }
+                onCreated={() => setAdded(true)}
+            />
+
             <div className="flex items-center gap-3 mb-6">
                 <Sparkles className="w-8 h-8 text-green-400" />
                 <h2 className="text-2xl font-bold text-green-300">

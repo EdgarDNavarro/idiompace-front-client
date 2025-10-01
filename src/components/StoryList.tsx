@@ -5,6 +5,7 @@ import { getStories } from "../services/stories";
 import { useNavigate } from "react-router-dom";
 import { Pagination } from "./Pagination";
 import ViewDailyPhrase from "./daily/ViewDailyPhrase";
+import DailyGrid from "./daily/DailyGrid";
 
 export const StoryList = () => {
     const [stories, setStories] = useState<Story[]>([]);
@@ -117,6 +118,8 @@ export const StoryList = () => {
             )}
 
             <ViewDailyPhrase/>
+
+            <DailyGrid/>
         </div>
     );
 };

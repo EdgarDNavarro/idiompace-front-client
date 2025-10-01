@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createFlashcard } from "../../services/flashcards";
 import { Flashcard } from "../../schemas";
 import { X } from "lucide-react";
@@ -7,12 +7,14 @@ type CreateFlashcardModalProps = {
     open: boolean;
     onClose: () => void;
     onCreated?: (flashcard: Flashcard) => void;
+    flashcard?: Pick<Flashcard, "front" | "back" | "example" >;
 };
 
 const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
     open,
     onClose,
     onCreated,
+    flashcard
 }) => {
     const [form, setForm] = useState({
         front: "",
@@ -21,6 +23,16 @@ const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (flashcard) {
+            setForm({
+                front: flashcard.front,
+                back: flashcard.back,
+                example: flashcard.example,
+            });
+        }
+    }, [flashcard]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
