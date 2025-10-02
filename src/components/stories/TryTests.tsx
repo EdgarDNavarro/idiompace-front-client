@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Test } from "../../schemas";
 import { createFlashcard } from "../../services/flashcards";
 import { Eye, EyeOff, Flag } from "lucide-react";
+import CreateFlashcardModal from "../flashcards/CreateFlashcard";
 
 type TryTestsProps = {
     tests: Test[];
@@ -17,6 +18,8 @@ function normalize(str: string) {
 
 const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
     const [showExample, setShowExample] = useState<{ [id: number]: boolean }>({});
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedTest, setSelectedTest] = useState<{test: Test | undefined, idx: number}>({test: undefined, idx: -1});
 
     const [inputs, setInputs] = useState<string[]>(
         Array(tests.length).fill("")
@@ -50,20 +53,19 @@ const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
     };
 
     const saveToFlashcards = async (test: Test, idx: number) => {
-        try {
-            const flashcardData = {
-                front: test.ask,
-                back: test.answer,
-                example: test.phrase,
-            };
-            await createFlashcard(flashcardData);
-            const newCreated = [...created];
-            newCreated[idx] = true;
-            setCreated(newCreated);
-        } catch (error) {
-            console.log(error);
-        }
+  
+        if (created[idx]) return;
+        setSelectedTest({test, idx});
+        setModalOpen(true);
+
     };
+
+    const onCreatedFlashcard = () => {
+        if (selectedTest.idx === -1) return;
+        const newCreated = [...created];
+        newCreated[selectedTest.idx] = true;
+        setCreated(newCreated);
+    }
 
     const handleToggleExample = (id: number) => {
         setShowExample(prev => ({
@@ -88,6 +90,19 @@ const TryTests: React.FC<TryTestsProps> = ({ tests }) => {
 
     return (
         <div className="w-full max-w-4xl mx-auto mt-10 space-y-6">
+
+            <CreateFlashcardModal
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+                flashcard={selectedTest.test ? {
+                        front: selectedTest.test.ask,
+                        back: selectedTest.test.answer,
+                        example: selectedTest.test.phrase 
+                    } : undefined
+                }
+                onCreated={onCreatedFlashcard}
+            />
+
             <h2 className="text-xl font-bold text-gray-100 mb-4 text-center">
                 Pon a prueba tu vocabulario - Test your vocabulary
             </h2>

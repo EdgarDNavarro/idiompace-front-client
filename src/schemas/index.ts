@@ -35,7 +35,7 @@ export const paginationMetaSchema = z.object({
     total: z.number().int().nonnegative(),
     page: z.number().int().min(1),
     limit: z.number().int().positive(),
-    totalPages: z.number().int().min(1),
+    totalPages: z.number().int().nonnegative(),
 });
 
 export const FlashcardSchema = z.object({

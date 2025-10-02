@@ -1,4 +1,4 @@
-import { BookOpen, Users, Play } from "lucide-react";
+import { BookOpen, Users, Play, Search } from "lucide-react";
 import { PaginationMeta, Story } from "../schemas";
 import { useEffect, useState } from "react";
 import { getStories } from "../services/stories";
@@ -6,6 +6,14 @@ import { useNavigate } from "react-router-dom";
 import { Pagination } from "./Pagination";
 import ViewDailyPhrase from "./daily/ViewDailyPhrase";
 import DailyGrid from "./daily/DailyGrid";
+
+const CATEGORIES = [
+    "Infantil", "Educativo", "Ciencia", "Ficción", "Conversacion", "Trabajo", "Viajes", "Comida", "Programacion",
+    "Salud", "Negocios", "Tecnologia", "Universidad", "Escuela", "Hogar", "Deportes", "Cuerpo humano", "Animales",
+    "Naturaleza", "Numeros", "Pasado continuo", "Presente simple", "Futuro going to", "Presente perfecto",
+    "Past perfect", "Reported speech", "Voz pasiva", "Futuro will", "Presente continuo", "Past simple",
+    "Condicionales", "Modales", "Phrasal verbs"
+];
 
 export const StoryList = () => {
     const [stories, setStories] = useState<Story[]>([]);
@@ -16,25 +24,52 @@ export const StoryList = () => {
         totalPages: 1,
     });
 
+    const [idiom, setIdiom] = useState("English");
+    const [title, setTitle] = useState("");
+    const [category, setCategory] = useState("");
+    const [searching, setSearching] = useState(false);
+
     const navigate = useNavigate();
 
     const goToStory = (id: Story["id"]) => {
         navigate("/stories/" + id);
     };
 
-    const getFromApiStories = async (page = 1) => {
+    const getFromApiStories = async (page = 1, preferIdiom = idiom) => {
+        setSearching(true);
         try {
-            const result = await getStories(page, meta.limit);
+            const result = await getStories(page, meta.limit, preferIdiom, title, category);
             setStories(result.data);
             setMeta(result.meta);
         } catch (error) {
             console.log(error);
+        } finally {
+            setSearching(false);
         }
     };
 
     useEffect(() => {
-        getFromApiStories();
+        const storedIdiom = localStorage.getItem("preferredIdiom");
+        if (storedIdiom) {
+            setIdiom(storedIdiom);
+            getFromApiStories(1, storedIdiom);
+        } else {
+            localStorage.setItem("preferredIdiom", idiom);
+            getFromApiStories(1, idiom);
+        }
+
     }, []);
+
+    const handleIdiomChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const idiom = e.target.value;
+        localStorage.setItem("preferredIdiom", idiom);
+        setIdiom(idiom);
+    }
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        getFromApiStories(1);
+    };
 
     const getLevelColor = (level: string) => {
         switch (level) {
@@ -54,6 +89,56 @@ export const StoryList = () => {
             <h1 className="text-3xl font-bold text-gray-100 mb-8">
                 English Learning Stories
             </h1>
+
+            {/* Barra de búsqueda */}
+            <form
+                onSubmit={handleSearch}
+                className="flex flex-wrap gap-4 items-end mb-8 bg-neutral-900 p-4 rounded-xl border border-neutral-800 shadow"
+            >
+                <div>
+                    <label className="block text-xs text-gray-400 mb-1">Idioma</label>
+                    <select
+                        value={idiom}
+                        onChange={handleIdiomChange}
+                        className="px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white"
+                    >
+                        <option value="English">English</option>
+                        <option value="Spanish">Spanish</option>
+                    </select>
+                </div>
+                <div className="flex-1 min-w-[200px]">
+                    <label className="block text-xs text-gray-400 mb-1">Título</label>
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        placeholder="Buscar por título"
+                        className="px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white w-full"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs text-gray-400 mb-1">Categoría</label>
+                    <select
+                        value={category}
+                        onChange={e => setCategory(e.target.value)}
+                        className="px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white"
+                    >
+                        <option value="">Todas</option>
+                        {CATEGORIES.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
+                <button
+                    type="submit"
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition font-semibold"
+                    disabled={searching}
+                >
+                    <Search className="w-5 h-5" />
+                    Buscar
+                </button>
+            </form>
+
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {stories.map((story) => (
                     <div
@@ -117,9 +202,9 @@ export const StoryList = () => {
                 <Pagination meta={meta} onPageChange={getFromApiStories} />
             )}
 
-            <ViewDailyPhrase/>
+            <ViewDailyPhrase />
 
-            <DailyGrid/>
+            <DailyGrid />
         </div>
     );
 };

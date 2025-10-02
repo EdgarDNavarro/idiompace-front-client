@@ -88,10 +88,10 @@ export const StoryViewer = () => {
                                             : "text-lg text-gray-600 opacity-50"
                                     }`}
                                 >
-                                    <p>{phrase.english}</p>
+                                    <p>{story.idiom === "English" ? phrase.english : phrase.spanish}</p>
                                     {showTranslations && (
                                         <p className="italic text-gray-400 text-base">
-                                            {phrase.spanish}
+                                            {story.idiom === "English" ? phrase.spanish : phrase.english}
                                         </p>
                                     )}
                                 </div>

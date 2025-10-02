@@ -2,10 +2,22 @@ import api from "../conf/axios";
 import { z } from "zod";
 import { paginationMetaSchema, StorySchema } from "../schemas";
 
+type StoryParams = {
+    page?: number;
+    limit?: number;
+    idiom?: string;
+    title?: string;
+    category?: string;
+};
 
-export const getStories = async (page = 1, limit = 10) => {
+export const getStories = async (page = 1, limit = 10, idiom = "English", title = "", categories = "") => {
+    const storyParams: StoryParams = { page, limit };
+    if (idiom) storyParams.idiom = idiom;
+    if (title) storyParams.title = title;
+    if (categories) storyParams.category = categories;
+
     const response = await api.get('/stories', {
-        params: { page, limit },
+        params: storyParams,
     });
 
     const stories = response.data.data;
