@@ -32,14 +32,14 @@ function Header() {
     return (
         <div className="flex items-center justify-between p-6">
         <div className="flex items-center gap-3 ">
-            <div onClick={() => navigate('/')} className="bg-gray-200 p-1 rounded-xl cursor-pointer hover:bg-gray-300 transition-colors border-2 border-green-600">
+            <div onClick={() => navigate('/')} className="bg-green-500 p-1 rounded-xl cursor-pointer hover:bg-green-600 transition-colors ">
 
 
-                <img src="/ChatGPTaguacate-removebg-preview.png" className="w-14 h-14" />
+                <BookOpen className="w-8 h-8" />
             </div>
             <div>
                 <h1 className="text-3xl font-bold text-green-600">
-                    Echo Hass
+                    Idiom pace
                 </h1>
                 <p className="text-gray-300">
                     Learn English through interactive stories
