@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { createFlashcard } from "../../services/flashcards";
 import { Flashcard } from "../../schemas";
-import { X } from "lucide-react";
+import { X, RefreshCw, ArrowUpDown } from "lucide-react";
 
 type CreateFlashcardModalProps = {
     open: boolean;
     onClose: () => void;
     onCreated?: (flashcard: Flashcard) => void;
-    flashcard?: Pick<Flashcard, "front" | "back" | "example" >;
+    flashcard?: Pick<Flashcard, "front" | "back" | "example">;
 };
 
 const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
@@ -38,6 +38,14 @@ const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
+    const handleSwap = () => {
+        setForm((prev) => ({
+            ...prev,
+            front: prev.back,
+            back: prev.front,
+        }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -47,7 +55,7 @@ const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
             if (onCreated) onCreated(flashcard);
             setForm({ front: "", back: "", example: "" });
             onClose();
-        } catch (err: any) {
+        } catch {
             setError("No se pudo crear la flashcard.");
         } finally {
             setLoading(false);
@@ -65,8 +73,12 @@ const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
                 >
                     <X className="w-6 h-6" />
                 </button>
-                <h2 className="text-xl font-bold text-green-400 mb-6 text-center">Crear Flashcard</h2>
+                <h2 className="text-xl font-bold text-green-400 mb-6 text-center">
+                    Crear Flashcard
+                </h2>
+
                 {error && <div className="text-red-400 mb-2 text-center">{error}</div>}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-gray-300 mb-1">Frente</label>
@@ -79,6 +91,17 @@ const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
                             className="w-full px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white focus:outline-none"
                         />
                     </div>
+
+                    <div className="flex justify-center">
+                        <button
+                            type="button"
+                            onClick={handleSwap}
+                            className="text-sm text-gray-300 hover:text-green-400 transition"
+                        >
+                            <ArrowUpDown className="w-6 h-6" />
+                        </button>
+                    </div>
+
                     <div>
                         <label className="block text-gray-300 mb-1">Reverso</label>
                         <input
@@ -90,6 +113,7 @@ const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
                             className="w-full px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white focus:outline-none"
                         />
                     </div>
+
                     <div>
                         <label className="block text-gray-300 mb-1">Ejemplo</label>
                         <textarea
@@ -100,6 +124,7 @@ const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
                             className="w-full px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white focus:outline-none resize-none"
                         />
                     </div>
+
                     <button
                         type="submit"
                         disabled={loading}
