@@ -94,12 +94,12 @@ const FlashcardsDeck: React.FC = () => {
         <div>
             <h2 className="text-2xl font-bold text-green-400 mb-6 text-center">Tus Flashcards</h2>
 
-            <div className="flex justify-between mb-6">
+            <div className="flex justify-between mb-6 gap-2 flex-wrap">
                 <Link to={"/flashcards"} className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
                     Volver <ArrowLeft className="w-4 h-4" />
                 </Link>
 
-                <div>
+                <div className="flex gap-2 flex-wrap">
                     <button
                         onClick={() => setModalOpen(true)}
                         className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition "
@@ -109,7 +109,7 @@ const FlashcardsDeck: React.FC = () => {
 
                     <Link
                         to={`/flashcards/try/${deckId}`}
-                        className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition mx-2"
+                        className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition"
                     >
                         <GraduationCap className="w-5 h-5 " />
                         Intentar
@@ -188,7 +188,7 @@ const FlashcardsDeck: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                            <div className="flex gap-2 mt-2">
+                            <div className="flex gap-2 mt-2 flex-wrap">
                                 <button
                                     className="flex-1 flex items-center justify-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition text-xs"
                                     onClick={() => handleEdit(f)}
