@@ -6,9 +6,11 @@ import {
 } from "../../services/flashcards";
 import { Flashcard } from "../../schemas";
 import { Loader2, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 const StudyFlashcards: React.FC = () => {
+    const { deckId } = useParams();
+
     const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
     const [current, setCurrent] = useState(0);
     const [showBack, setShowBack] = useState(false);
@@ -20,8 +22,7 @@ const StudyFlashcards: React.FC = () => {
         const fetchDue = async () => {
             setLoading(true);
             try {
-                const data = await getDueFlashcards();
-                console.log(data);
+                const data = await getDueFlashcards(deckId as string);
                 setFlashcards(data);
                 setFinished(data.length === 0);
             } catch (e) {
@@ -31,8 +32,10 @@ const StudyFlashcards: React.FC = () => {
                 setLoading(false);
             }
         };
-        fetchDue();
-    }, []);
+        if(deckId) {
+            fetchDue();
+        }
+    }, [deckId]);
 
     const handleShowBack = () => setShowBack(true);
 
@@ -73,7 +76,7 @@ const StudyFlashcards: React.FC = () => {
                 <CheckCircle2 className="w-12 h-12 text-green-400 mb-4" />
                 <h2 className="text-2xl font-bold text-green-300 mb-2">¡Has terminado tus flashcards!</h2>
                 <p className="text-gray-400">Vuelve en un rato para seguir practicando.</p>
-                <Link to={"/flashcards"} className="mt-6 inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
+                <Link to={`/flashcards/deck/${deckId}`} className="mt-6 inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
                     Volver <ArrowLeft className="w-4 h-4" />
                 </Link>
             </div>

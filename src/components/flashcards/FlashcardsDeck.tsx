@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { getFlashcards, deleteFlashcard } from "../../services/flashcards";
+import { getFlashcards, deleteFlashcard, deleteDeck } from "../../services/flashcards";
 import { Flashcard } from "../../schemas";
-import { Link } from "react-router-dom";
-import { Eye, EyeOff, Pencil, Trash2, Plus, GraduationCap } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Eye, EyeOff, Pencil, Trash2, Plus, GraduationCap, ArrowLeft } from "lucide-react";
 import CreateFlashcardModal from "./CreateFlashcard";
 import EditFlashcardModal from "./EditFlashcard";
-import FlashcardHowItWorks from "./FlashcardHowItWorks";
 
 const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return "-";
@@ -17,7 +16,10 @@ const formatDate = (dateStr?: string | null) => {
     );
 };
 
-const ManageFlashcards: React.FC = () => {
+const FlashcardsDeck: React.FC = () => {
+    const { deckId } = useParams();
+    const navigate = useNavigate()
+    
     const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
     const [showExample, setShowExample] = useState<{ [id: number]: boolean }>({});
     const [showBack, setShowBack] = useState<{ [id: number]: boolean }>({});
@@ -42,7 +44,7 @@ const ManageFlashcards: React.FC = () => {
         const fetchFlashcards = async () => {
             setLoading(true);
             try {
-                const data = await getFlashcards();
+                const data = await getFlashcards(deckId as string);
                 setFlashcards(data);
             } catch (error) {
                 console.log(error);
@@ -50,8 +52,11 @@ const ManageFlashcards: React.FC = () => {
                 setLoading(false);
             }
         };
-        fetchFlashcards();
-    }, []);
+        if(deckId) {
+            fetchFlashcards();
+        }
+        
+    }, [deckId]);
 
     const handleDelete = async (id: number) => {
         if (!window.confirm("¿Seguro que deseas eliminar esta flashcard?")) return;
@@ -78,32 +83,58 @@ const ManageFlashcards: React.FC = () => {
         setFlashcards(prev => [flashcard, ...prev]);
     };
 
+    const handleDeleteDeck = async () => {
+        if (!deckId) return;
+        if (!window.confirm("¿Seguro que deseas eliminar este deck y todas sus flashcards? No se puede revertir")) return;
+        await deleteDeck(deckId);
+        navigate("/flashcards")
+    }
+
     return (
         <div>
             <h2 className="text-2xl font-bold text-green-400 mb-6 text-center">Tus Flashcards</h2>
+
+            <div className="flex justify-between mb-6">
+                <Link to={"/flashcards"} className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
+                    Volver <ArrowLeft className="w-4 h-4" />
+                </Link>
+
+                <div>
+                    <button
+                        onClick={() => setModalOpen(true)}
+                        className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition "
+                    >
+                        <Plus className="w-5 h-5" /> Crear Nueva Flashcard
+                    </button>
+
+                    <Link
+                        to={`/flashcards/try/${deckId}`}
+                        className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition mx-2"
+                    >
+                        <GraduationCap className="w-5 h-5 " />
+                        Intentar
+                    </Link>
+
+                    <button
+                        className="inline-flex items-center justify-center gap-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition "
+                        onClick={() => handleDeleteDeck()}
+                    >
+                        <Trash2 className="w-5 h-5" /> Eliminar Mazo
+                    </button>
+                </div>
+                
+
+            </div>
             
-            <button
-                onClick={() => setModalOpen(true)}
-                className="inline-flex items-center gap-2 mb-6 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition mr-4"
-            >
-                <Plus className="w-5 h-5" /> Crear Nueva Flashcard
-            </button>
+            {deckId && (
+                <CreateFlashcardModal
+                    open={modalOpen}
+                    onClose={() => setModalOpen(false)}
+                    onCreated={handleCreated}
+                    deckId={Number(deckId)}
+                />
+            )}
 
-            <Link
-                to="/flashcards/try"
-                className="inline-flex items-center gap-2 mb-6 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition"
-            >
-                <GraduationCap className="w-5 h-5 " />
-                Intentar
-            </Link>
-
-            
-
-            <CreateFlashcardModal
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}
-                onCreated={handleCreated}
-            />
 
             <EditFlashcardModal
                 open={editModalOpen}
@@ -175,10 +206,8 @@ const ManageFlashcards: React.FC = () => {
                     ))}
                 </div>
             )}
-
-            <FlashcardHowItWorks/>
         </div>
     );
 };
 
-export default ManageFlashcards;
+export default FlashcardsDeck;

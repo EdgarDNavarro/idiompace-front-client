@@ -4,8 +4,9 @@ import { StoryViewer } from "./components/StoryViewer";
 import SignIn from "./components/auth/SignIn";
 import SignUp from "./components/auth/SignUp";
 import { ProtectedLayout } from "./components/ProtectedRoute";
-import ManageFlashcards from "./components/flashcards/ManageFlashcards";
 import StudyFlashcards from "./components/flashcards/StudyFlashcards";
+import ManageDecks from "./components/flashcards/ManageDecks";
+import FlashcardsDeck from "./components/flashcards/FlashcardsDeck";
 
 function App() {
   return (
@@ -18,8 +19,9 @@ function App() {
       <Route element={<ProtectedLayout />}>
         <Route path="/" element={<StoryList />} />
         <Route path="/stories/:id" element={<StoryViewer />} />
-        <Route path="/flashcards" element={<ManageFlashcards />} />
-        <Route path="/flashcards/try" element={<StudyFlashcards />} />
+        <Route path="/flashcards" element={<ManageDecks />} />
+        <Route path="/flashcards/deck/:deckId" element={<FlashcardsDeck />} />
+        <Route path="/flashcards/try/:deckId" element={<StudyFlashcards />} />
       </Route>
     </Routes>
   );

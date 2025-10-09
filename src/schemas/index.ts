@@ -38,6 +38,15 @@ export const paginationMetaSchema = z.object({
     totalPages: z.number().int().nonnegative(),
 });
 
+export const DeckSchema = z.object({
+    id: z.number().optional(),
+    name: z.string(),
+    userId: z.string(),
+    flashcardCount: z.string().optional(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+});
+
 export const FlashcardSchema = z.object({
     id: z.number().optional(),
     front: z.string(),
@@ -49,10 +58,12 @@ export const FlashcardSchema = z.object({
     easiness: z.number().optional(),
     lastReviewedAt: z.string().nullable().optional(),
     nextReviewAt: z.string().nullable().optional(),
-    userId: z.string(),
+    deckId: z.number(),
     createdAt: z.string(),
     updatedAt: z.string(),
 });
+
+
 
 export const DailySchema = z.object({
     id: z.number().optional(),
@@ -66,6 +77,7 @@ export const DailySchema = z.object({
 
 export type Daily = z.infer<typeof DailySchema>;
 
+export type Deck = z.infer<typeof DeckSchema>;
 export type Flashcard = z.infer<typeof FlashcardSchema>;
 
 export type Test = z.infer<typeof TestSchema>;

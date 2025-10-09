@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { createFlashcard } from "../../services/flashcards";
-import { Flashcard } from "../../schemas";
-import { X, RefreshCw, ArrowUpDown } from "lucide-react";
+import { createFlashcard, getDecks } from "../../services/flashcards";
+import { Deck, Flashcard } from "../../schemas";
+import { X, ArrowUpDown } from "lucide-react";
 
 type CreateFlashcardModalProps = {
     open: boolean;
+    deckId?: number;
     onClose: () => void;
     onCreated?: (flashcard: Flashcard) => void;
     flashcard?: Pick<Flashcard, "front" | "back" | "example">;
@@ -12,17 +13,32 @@ type CreateFlashcardModalProps = {
 
 const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
     open,
+    deckId,
     onClose,
     onCreated,
     flashcard
 }) => {
+    const [decks, setDecks] = useState<Deck[]>([]);
     const [form, setForm] = useState({
         front: "",
         back: "",
         example: "",
+        deckId: deckId || 0,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchDecks = async () => {
+            try {
+                const data = await getDecks();
+                setDecks(data);
+            } catch (error) {
+                console.log(error);
+            } 
+        };
+        fetchDecks();
+    }, []);
 
     useEffect(() => {
         if (flashcard) {
@@ -30,11 +46,12 @@ const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
                 front: flashcard.front,
                 back: flashcard.back,
                 example: flashcard.example,
+                deckId: deckId || 0,
             });
         }
     }, [flashcard]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
@@ -48,12 +65,20 @@ const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if(form.deckId === 0) {
+            setError("Deck ID is required.");
+            return;
+        }
+
         setLoading(true);
         setError(null);
+
+        
         try {
             const flashcard = await createFlashcard(form);
             if (onCreated) onCreated(flashcard);
-            setForm({ front: "", back: "", example: "" });
+            setForm({ front: "", back: "", example: "", deckId: deckId || 0 });
             onClose();
         } catch {
             setError("No se pudo crear la flashcard.");
@@ -113,6 +138,25 @@ const CreateFlashcardModal: React.FC<CreateFlashcardModalProps> = ({
                             className="w-full px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white focus:outline-none"
                         />
                     </div>
+
+                    {deckId === undefined && (
+                        <div>
+                            <label className="block text-gray-300 mb-1">Mazo</label>
+                            <select
+                                name="deckId"
+                                value={form.deckId}
+                                onChange={handleChange}
+                                required
+                                className="w-full px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white focus:outline-none"
+                            >
+                                <option value={0} disabled>Selecciona un mazo</option>
+
+                                {decks.map(deck => (
+                                    <option key={deck.id} value={deck.id}>{deck.name} ({deck.flashcardCount})</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div>
                         <label className="block text-gray-300 mb-1">Ejemplo</label>
