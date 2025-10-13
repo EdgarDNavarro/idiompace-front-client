@@ -100,12 +100,12 @@ const TryExercises: React.FC<TryExercisesProps> = ({ exercises }) => {
 
                 <div className="grid grid-cols-1 gap-3 mb-6">
                     {[0, 1, 2, 3].map((idx) => {
+
                         const isSelected = selectedAnswer === idx;
                         const isCorrectOption =
                             optionLabels[idx] === exercises[currentExercise].correctOption;
 
-                        let buttonClass =
-                            "w-full py-3 px-4 rounded-lg text-lg font-medium transition-all border border-neutral-700 bg-neutral-800 text-white flex items-center gap-3";
+                        let buttonClass = "w-full py-3 px-4 rounded-lg text-lg font-medium transition-all border border-neutral-700 text-white flex items-center gap-3";
                         if (showResult) {
                             if (isCorrectOption) {
                                 buttonClass += " bg-green-600 border-green-600 text-white";
