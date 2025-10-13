@@ -10,6 +10,30 @@ export const TestSchema = z.object({
     updatedAt: z.string().optional(),
 });
 
+export const VocabularySchema = z.object({
+    id: z.number().optional(),
+    vocabulary: z.string(),
+    translation: z.string(),
+    example: z.string(),
+    storyId: z.number(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+});
+
+export const ExerciseSchema = z.object({
+    id: z.number().optional(),
+    question: z.string(),
+    optionA: z.string(),
+    optionB: z.string(),
+    optionC: z.string(),
+    optionD: z.string(),
+    correctOption: z.string().min(1).max(1), // 'A', 'B', 'C', 'D'
+    explanation: z.string(),
+    storyId: z.number(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+});
+
 export const PhraseSchema = z.object({
     startTime: z.number(),
     endTime: z.number(),
@@ -27,6 +51,8 @@ export const StorySchema = z.object({
     is_interactive: z.boolean(),
     level: z.string(),
     tests: z.array(TestSchema),
+    vocabularies: z.array(VocabularySchema),
+    exercises: z.array(ExerciseSchema),
     createdAt: z.string(),
     updatedAt: z.string(),
 });
@@ -74,6 +100,9 @@ export const DailySchema = z.object({
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
 });
+
+export type Vocabulary = z.infer<typeof VocabularySchema>;
+export type Exercise = z.infer<typeof ExerciseSchema>;
 
 export type Daily = z.infer<typeof DailySchema>;
 

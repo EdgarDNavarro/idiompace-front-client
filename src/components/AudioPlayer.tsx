@@ -72,7 +72,7 @@ export const AudioPlayer = ({
     setCurrentTime(currentTime);
 
     return (
-        <div className="bg-neutral-900 rounded-xl shadow-md border border-neutral-800 p-6 w-full max-w-4xl">
+        <div className="bg-neutral-900 rounded-xl shadow-md border border-neutral-800 p-6 w-full max-w-3xl sticky bottom-4 mb-4 mx-auto ">
             <audio ref={audioRef} />
 
             {/* Header */}
