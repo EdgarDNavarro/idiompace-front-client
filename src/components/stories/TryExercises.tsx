@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { Exercise } from "../../schemas";
 import { BookOpen, CheckCircle2, XCircle } from "lucide-react";
+import correctSound from "../../../assets/correct.mp3";
+import wrongSound from "../../../assets/wrong.mp3";
+import allGoodSound from "../../../assets/all-good.mp3";
+import { useSound } from "../../hooks/useSound";
 
 type TryExercisesProps = {
     exercises: Exercise[];
@@ -19,6 +23,10 @@ const getOptionText = (exercise: Exercise, idx: number) => {
 };
 
 const TryExercises: React.FC<TryExercisesProps> = ({ exercises }) => {
+    const playCorrect = useSound(correctSound);
+    const playWrong = useSound(wrongSound);
+    const playAllGoodSound = useSound(allGoodSound);
+
     const [currentExercise, setCurrentExercise] = useState(0);
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
     const [showResult, setShowResult] = useState(false);
@@ -34,7 +42,14 @@ const TryExercises: React.FC<TryExercisesProps> = ({ exercises }) => {
         if (selectedAnswer === null) return;
         setShowResult(true);
         if (optionLabels[selectedAnswer] === exercises[currentExercise].correctOption) {
+            playCorrect()
             setScore(score + 1);
+        } else {
+            playWrong()
+        }
+
+        if(currentExercise === exercises.length -1) {
+            playAllGoodSound()
         }
         setCompletedExercises(completedExercises + 1);
     };

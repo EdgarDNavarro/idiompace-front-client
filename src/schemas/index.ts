@@ -10,6 +10,15 @@ export const TestSchema = z.object({
     updatedAt: z.string().optional(),
 });
 
+export const StreakSchema = z.object({
+    id: z.number(),
+    currentStreak: z.number(),
+    longestStreak: z.number(),
+    userId: z.string(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+});
+
 export const VocabularySchema = z.object({
     id: z.number().optional(),
     vocabulary: z.string(),
@@ -103,6 +112,7 @@ export const DailySchema = z.object({
 
 export type Vocabulary = z.infer<typeof VocabularySchema>;
 export type Exercise = z.infer<typeof ExerciseSchema>;
+export type Streak = z.infer<typeof StreakSchema>;
 
 export type Daily = z.infer<typeof DailySchema>;
 

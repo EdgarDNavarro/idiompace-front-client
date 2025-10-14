@@ -7,6 +7,7 @@ import { getStoryById } from "../services/stories";
 import ListVocabularies from "./stories/ListVocabularies";
 import TryExercises from "./stories/TryExercises";
 import CreateFlashcardModal from "./flashcards/CreateFlashcard";
+import { getStreaks, updateStreak } from "../services/streaks";
 
 export const StoryViewer = () => {
     const navigate = useNavigate();
@@ -18,7 +19,6 @@ export const StoryViewer = () => {
 
     const activePhraseRef = useRef<HTMLDivElement | null>(null);
 
-    // Flashcard modal state
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedPhrase, setSelectedPhrase] = useState<Phrase | null>(null);
 
@@ -38,6 +38,27 @@ export const StoryViewer = () => {
         getFromApiStories();
     }, []);
 
+    const verifyUpdateStreak = async () => {
+        try {
+            const streak = await getStreaks()
+            if(!streak.updatedAt) return
+            const updatedAt = new Date(streak.updatedAt);
+            const today = new Date();
+
+            const wasUpdatedToday =
+            updatedAt.getFullYear() === today.getFullYear() &&
+            updatedAt.getMonth() === today.getMonth() &&
+            updatedAt.getDate() === today.getDate();
+
+            if(!wasUpdatedToday) {
+                console.log("Actualizar racha", streak);
+                await updateStreak(streak.currentStreak + 1, Math.max(streak.longestStreak, streak.currentStreak + 1))
+            }
+        } catch (error) {
+            
+        }
+    }
+
     useEffect(() => {
         if (activePhraseRef.current) {
             activePhraseRef.current.scrollIntoView({
@@ -45,11 +66,18 @@ export const StoryViewer = () => {
                 block: "center",
             });
         }
+
+        if(story && story.phrases[currentPhraseIndex] && isCurrentPhrase(story.phrases[currentPhraseIndex])) {
+            //Si es la última frase, verificar racha
+            if(currentPhraseIndex === story.phrases.length - 1) {
+                verifyUpdateStreak()
+            }
+        }
     }, [currentPhraseIndex]);
 
     const handleShowTranslations = async () => {
         setShowTranslations(!showTranslations);
-        await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for the state to update
+        await new Promise((resolve) => setTimeout(resolve, 100)); 
         if (activePhraseRef.current) {
             activePhraseRef.current.scrollIntoView({
                 behavior: "smooth",
@@ -58,7 +86,6 @@ export const StoryViewer = () => {
         }
     };
 
-    // Abrir modal para crear flashcard de frase
     const handleCreateFlashcard = (phrase: Phrase) => {
         setSelectedPhrase(phrase);
         setModalOpen(true);
@@ -95,10 +122,10 @@ export const StoryViewer = () => {
                 <div className="w-full max-w-6xl relative ">
 
                     {/* Header */}
-                    <div className="w-full flex items-center justify-between py-4 px-6 sticky top-10 z-10">
+                    <div className="w-full flex items-center justify-between py-4 px-6 sticky top-6 z-10 backdrop-blur-sm rounded-md md:backdrop-blur-0">
                         <button
                             onClick={() => navigate("/")}
-                            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5" />
                             Back
@@ -106,7 +133,7 @@ export const StoryViewer = () => {
 
                         <button
                             onClick={handleShowTranslations}
-                            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
                         >
                             {showTranslations ? (
                                 <Eye className="w-4 h-4" />

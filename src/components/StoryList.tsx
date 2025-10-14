@@ -1,11 +1,14 @@
 import { BookOpen, Users, Play, Search } from "lucide-react";
-import { PaginationMeta, Story } from "../schemas";
+import { PaginationMeta, Story, Streak } from "../schemas";
 import { useEffect, useState } from "react";
 import { getStories } from "../services/stories";
 import { useNavigate } from "react-router-dom";
 import { Pagination } from "./Pagination";
 import ViewDailyPhrase from "./daily/ViewDailyPhrase";
 import DailyGrid from "./daily/DailyGrid";
+import { StreakCounter } from "./streak/StreakCounter";
+import { createStreak, getStreaks } from "../services/streaks";
+import { isAxiosError } from "axios";
 
 const CATEGORIES = [
     "Infantil", "Educativo", "Ciencia", "Ficción", "Conversacion", "Trabajo", "Viajes", "Comida", "Programacion",
@@ -28,6 +31,7 @@ export const StoryList = () => {
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState("");
     const [searching, setSearching] = useState(false);
+    const [streak, setStreak] = useState({ currentStreak: 0, longestStreak: 0 });
 
     const navigate = useNavigate();
 
@@ -48,7 +52,25 @@ export const StoryList = () => {
         }
     };
 
+    const getStreaksFromApi = async (repected = false) => {
+        
+        try {
+            const result = await getStreaks();
+            setStreak(result);
+            
+        } catch (error) {
+            console.log(error);
+            if(isAxiosError(error) && error.status === 404) {
+                await createStreak();
+
+                if(repected) return
+                getStreaksFromApi(true)
+            }
+        }
+    }
+
     useEffect(() => {
+        getStreaksFromApi()
         const storedIdiom = localStorage.getItem("preferredIdiom");
         if (storedIdiom) {
             setIdiom(storedIdiom);
@@ -89,6 +111,11 @@ export const StoryList = () => {
             <h1 className="text-3xl font-bold text-gray-100 mb-8">
                 English Learning Stories
             </h1>
+
+            <StreakCounter 
+                currentStreak={streak.currentStreak}
+                longestStreak={streak.longestStreak}
+            />
 
             {/* Barra de búsqueda */}
             <form

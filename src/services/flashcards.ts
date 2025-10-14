@@ -48,6 +48,15 @@ export const getDueFlashcards = async (deckId: string): Promise<Flashcard[]> => 
     return parsed.data;
 };
 
+export const getAllDueFlashcards = async (): Promise<Flashcard[]> => {
+    const response = await api.get(`/flashcards/all/due`);
+    const parsed = z.array(FlashcardSchema).safeParse(response.data.data);
+    if (!parsed.success) {
+        throw new Error("Invalid flashcards schema");
+    }
+    return parsed.data;
+};
+
 // Crear una flashcard en un deck
 export const createFlashcard = async (
     flashcard: Pick<Flashcard, "front" | "back" | "example" | "deckId"> 
