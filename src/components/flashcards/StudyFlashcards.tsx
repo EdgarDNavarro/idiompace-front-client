@@ -9,9 +9,11 @@ import { Flashcard } from "../../schemas";
 import { Loader2, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { getStreaks, updateStreak } from "../../services/streaks";
+import { useCustomToast } from "../../hooks/useCustomToast";
 
 const StudyFlashcards: React.FC = () => {
     const { deckId } = useParams();
+    const { showStreakToast } = useCustomToast();
 
     const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
     const [current, setCurrent] = useState(0);
@@ -82,6 +84,7 @@ const StudyFlashcards: React.FC = () => {
                 if(!wasUpdatedToday) {
                     console.log("Actualizar racha", streak);
                     await updateStreak(streak.currentStreak + 1, Math.max(streak.longestStreak, streak.currentStreak + 1))
+                    showStreakToast()
                 }
                 
             }

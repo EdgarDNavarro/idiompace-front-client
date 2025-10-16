@@ -8,9 +8,11 @@ import ListVocabularies from "./stories/ListVocabularies";
 import TryExercises from "./stories/TryExercises";
 import CreateFlashcardModal from "./flashcards/CreateFlashcard";
 import { getStreaks, updateStreak } from "../services/streaks";
+import { useCustomToast } from "../hooks/useCustomToast";
 
 export const StoryViewer = () => {
     const navigate = useNavigate();
+    const { showStreakToast } = useCustomToast();
     const [story, setStory] = useState<Story | null>(null);
     const [showTranslations, setShowTranslations] = useState(true);
     const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
@@ -51,8 +53,8 @@ export const StoryViewer = () => {
             updatedAt.getDate() === today.getDate();
 
             if(!wasUpdatedToday) {
-                console.log("Actualizar racha", streak);
                 await updateStreak(streak.currentStreak + 1, Math.max(streak.longestStreak, streak.currentStreak + 1))
+                showStreakToast();
             }
         } catch (error) {
             

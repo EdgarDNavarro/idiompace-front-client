@@ -1,5 +1,5 @@
 import { BookOpen, Users, Play, Search } from "lucide-react";
-import { PaginationMeta, Story, Streak } from "../schemas";
+import { PaginationMeta, Story } from "../schemas";
 import { useEffect, useState } from "react";
 import { getStories } from "../services/stories";
 import { useNavigate } from "react-router-dom";
