@@ -110,6 +110,129 @@ export const DailySchema = z.object({
     updatedAt: z.string().optional(),
 });
 
+const VerbPersonSchema = z.object({
+    singular_first_person: z.string(),
+    singular_second_person: z.string(),
+    singular_formal_second_person: z.string(),
+    singular_third_person: z.string(),
+    plural_first_person: z.string(),
+    plural_second_person: z.string(),
+    plural_formal_second_person: z.string(),
+    plural_third_person: z.string(),
+});
+
+const NonPersonalSchema = z.object({
+    infinitive: z.string(),
+    participle: z.string(),
+    gerund: z.string(),
+    compound_infinitive: z.string(),
+    compound_gerund: z.string(),
+});
+
+const IndicativeSchema = z.object({
+    present: VerbPersonSchema,
+    present_perfect: VerbPersonSchema,
+    imperfect: VerbPersonSchema,
+    past_perfect: VerbPersonSchema,
+    preterite: VerbPersonSchema,
+    past_anterior: VerbPersonSchema,
+    future: VerbPersonSchema,
+    future_perfect: VerbPersonSchema,
+    conditional: VerbPersonSchema,
+    conditional_perfect: VerbPersonSchema,
+});
+
+const SubjunctiveSchema = z.object({
+    present: VerbPersonSchema,
+    present_perfect: VerbPersonSchema,
+    imperfect: VerbPersonSchema,
+    past_perfect: VerbPersonSchema,
+    future: VerbPersonSchema,
+    future_perfect: VerbPersonSchema,
+});
+
+const ImperativeSchema = z.object({
+    singular_second_person: z.string(),
+    singular_formal_second_person: z.string(),
+    plural_second_person: z.string(),
+    plural_formal_second_person: z.string(),
+});
+
+const ConjugationsSchema = z.object({
+    non_personal: NonPersonalSchema,
+    indicative: IndicativeSchema,
+    subjunctive: SubjunctiveSchema,
+    imperative: ImperativeSchema,
+});
+
+
+export const RaeSchema = z.object({
+    word: z.string(),
+    meanings: z.array(
+        z.object({
+            origin: z.object({
+                raw: z.string(),
+                type: z.string(),
+                voice: z.string().nullable().optional(),
+                text: z.string(),
+            }).optional(),
+            senses: z.array(
+                z.object({
+                    raw: z.string(),
+                    meaning_number: z.number(),
+                    category: z.string(),
+                    usage: z.string().nullable().optional(),
+                    verb_category: z.string().nullable().optional(),
+                    description: z.string(),
+                    synonyms: z.array(z.string()).nullable().optional(),
+                    antonyms: z.array(z.string()).nullable().optional(),
+                })
+            ),
+            conjugations: ConjugationsSchema.optional(),
+        })
+    ),
+    suggestions: z.any().nullable().optional(),
+});
+
+
+export const EnglishEntrySchema = z.object({
+    word: z.string(),
+    phonetic: z.string().optional(),
+    phonetics: z.array(
+        z.object({
+        text: z.string().optional(),
+        audio: z.string().optional(),
+        sourceUrl: z.string().optional(),
+        license: z
+            .object({
+                name: z.string(),
+                url: z.string(),
+            }).optional(),
+        })
+    ),
+    meanings: z.array(
+        z.object({
+            partOfSpeech: z.string(),
+            definitions: z.array(
+                z.object({
+                    definition: z.string(),
+                    synonyms: z.array(z.string()),
+                    antonyms: z.array(z.string()),
+                    example: z.string().optional(),
+                })
+            ),
+            synonyms: z.array(z.string()),
+            antonyms: z.array(z.string()),
+        })
+    ),
+    license: z
+        .object({
+            name: z.string(),
+            url: z.string(),
+        }).optional(),
+    sourceUrls: z.array(z.string()),
+});
+
 export type Vocabulary = z.infer<typeof VocabularySchema>;
 export type Exercise = z.infer<typeof ExerciseSchema>;
 export type Streak = z.infer<typeof StreakSchema>;
@@ -123,3 +246,4 @@ export type Test = z.infer<typeof TestSchema>;
 export type Phrase = z.infer<typeof PhraseSchema>;
 export type Story = z.infer<typeof StorySchema>;
 export type PaginationMeta = z.infer<typeof paginationMetaSchema>;
+export type EnglishEntry = z.infer<typeof EnglishEntrySchema>;
