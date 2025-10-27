@@ -9,6 +9,8 @@ import ManageDecks from "./components/flashcards/ManageDecks";
 import FlashcardsDeck from "./components/flashcards/FlashcardsDeck";
 import Spanish from "./components/dictionaries/Spanish";
 import English from "./components/dictionaries/English";
+import Translation from "./components/dictionaries/Translation";
+import ListPlans from "./components/plans/ListPlans";
 
 function App() {
   return (
@@ -16,6 +18,7 @@ function App() {
       {/* Rutas públicas */}
       <Route path="/login" element={<SignIn />} />
       <Route path="/register" element={<SignUp />} />
+      <Route path="/plans" element={<ListPlans />} />
 
       {/* Rutas privadas */}
       <Route element={<ProtectedLayout />}>
@@ -27,6 +30,7 @@ function App() {
 
         <Route path="/dictionary/spanish" element={<Spanish />} />
         <Route path="/dictionary/english" element={<English />} />
+        <Route path="/dictionary/translation" element={<Translation />} />
       </Route>
     </Routes>
   );

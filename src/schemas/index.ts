@@ -200,14 +200,14 @@ export const EnglishEntrySchema = z.object({
     phonetic: z.string().optional(),
     phonetics: z.array(
         z.object({
-        text: z.string().optional(),
-        audio: z.string().optional(),
-        sourceUrl: z.string().optional(),
-        license: z
-            .object({
-                name: z.string(),
-                url: z.string(),
-            }).optional(),
+            text: z.string().optional(),
+            audio: z.string().optional(),
+            sourceUrl: z.string().optional(),
+            license: z
+                .object({
+                    name: z.string(),
+                    url: z.string(),
+                }).optional(),
         })
     ),
     meanings: z.array(
@@ -233,6 +233,48 @@ export const EnglishEntrySchema = z.object({
     sourceUrls: z.array(z.string()),
 });
 
+export const TranslationAPISchema = z.object({
+    "source-language": z.string(),
+    "source-text": z.string(),
+    "destination-language": z.string(),
+    "destination-text": z.string(),
+
+    pronunciation: z.object({
+        "source-text-phonetic": z.string().nullable().optional(),
+        "source-text-audio": z.string().url().nullable().optional(),
+        "destination-text-audio": z.string().url().nullable().optional(),
+    }),
+
+    translations: z.object({
+        "all-translations": z.array(
+            z.tuple([
+                z.string(), // palabra traducida (ej: "comer")
+                z.array(z.string()), // lista de posibles significados (ej: ["eat", "lunch", ...])
+            ])
+        ),
+        "possible-translations": z.array(z.string()).nullable().optional(),
+        "possible-mistakes": z.array(z.string()).nullable().optional(),
+    }),
+
+    definitions: z.array(
+        z.object({
+            "part-of-speech": z.string(),
+            definition: z.string(),
+            example: z.string().nullable().optional(),
+            "other-examples": z.array(z.string()).nullable().optional(),
+            synonyms: z.record(z.string(), z.array(z.string())).nullable().optional(),
+            // ejemplo:
+            // {
+            //   "informal": ["guzzle", "nosh"],
+            //   "": ["consume", "devour"],
+            //   "rare": ["ingurgitate"]
+            // }
+        })
+    ).nullable().optional(),
+
+    "see-also": z.array(z.array(z.string())).nullable().optional(),
+});
+
 export type Vocabulary = z.infer<typeof VocabularySchema>;
 export type Exercise = z.infer<typeof ExerciseSchema>;
 export type Streak = z.infer<typeof StreakSchema>;
@@ -247,3 +289,4 @@ export type Phrase = z.infer<typeof PhraseSchema>;
 export type Story = z.infer<typeof StorySchema>;
 export type PaginationMeta = z.infer<typeof paginationMetaSchema>;
 export type EnglishEntry = z.infer<typeof EnglishEntrySchema>;
+export type TranslationAPI = z.infer<typeof TranslationAPISchema>;
