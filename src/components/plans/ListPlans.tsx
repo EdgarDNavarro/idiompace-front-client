@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Check, Star, Zap, Brain, Sparkles, Crown, ChevronRight, X } from "lucide-react";
 import { authClient } from "../../lib/auth-client";
 import { Spinner } from "../loaders/Spinner";
+import { Subscription } from "@better-auth/stripe";
+import { useNavigate } from "react-router-dom";
 
 interface Plan {
     name: string;
@@ -70,9 +71,39 @@ const plans: Plan[] = [
 ];
 
 const ListPlans = () => {
+    const navigate = useNavigate();
+    const [subscriptions, setSubscriptions] = useState<Subscription | undefined>(undefined);
     const [loading, setLoading] = useState(false);
     const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
     const { data, isPending } = authClient.useSession();
+
+    useEffect(() => {
+        const listSubscriptions = async () => {
+            try {
+                const subscriptionData = await authClient.subscription.list({
+                    query: {
+                        referenceId: data?.user.id || "",
+                    }
+                });
+    
+                if(!subscriptionData.error && subscriptionData.data && subscriptionData.data.length > 0) {
+                    const activeSubscriptions = subscriptionData.data.find(sub => sub.status === "active");
+                    if(!activeSubscriptions) return
+                    setSubscriptions(activeSubscriptions);
+                } 
+            } catch (error) {
+                console.log(error);
+                
+            } finally {
+                setLoading(false);
+            }
+            
+        }
+        if(data) {
+            listSubscriptions()
+        }
+        console.log(data)
+    }, [data])
 
     if (isPending) return (
         <div className="bg-neutral-950 text-white min-h-screen flex items-center justify-center">
@@ -81,19 +112,36 @@ const ListPlans = () => {
     );
 
     const handleUpgrade = async (planName: string) => {
+        
+        
         if (!data) {
-            return <Navigate to="/login" replace />;
+            navigate("/login");
+            return;
         }
 
         setUpgradingPlan(planName);
         setLoading(true);
 
         try {
-            await authClient.subscription.upgrade({
+            const baseUrl = window.location.origin;
+
+            const upgradeData: {
+                plan: string;
+                successUrl: string;
+                cancelUrl: string;
+                subscriptionId: string | undefined;
+            } = {
                 plan: planName,
-                successUrl: "/dashboard",
-                cancelUrl: "/pricing"
-            });
+                successUrl: `${baseUrl}`,
+                cancelUrl: `${baseUrl}/plans`,
+                subscriptionId: undefined
+            }
+
+            if(subscriptions) {
+                upgradeData.subscriptionId = subscriptions.stripeSubscriptionId;
+            }
+
+            await authClient.subscription.upgrade(upgradeData);
         } catch (error) {
             console.error("Error upgrading plan:", error);
             // Handle error (show toast, etc.)
@@ -251,8 +299,8 @@ const ListPlans = () => {
                                 {/* CTA Button */}
                                 <button
                                     onClick={() => handleUpgrade(plan.name)}
-                                    disabled={loading}
-                                    className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                                    disabled={loading || (subscriptions && subscriptions.plan === plan.name)}
+                                    className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 ${
                                         plan.popular
                                             ? 'bg-green-500 hover:bg-green-600 text-white'
                                             : plan.recommended
@@ -262,17 +310,26 @@ const ListPlans = () => {
                                         loading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
                                     }`}
                                 >
-                                    {isUpgrading ? (
+                                    {isUpgrading && (
                                         <>
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                             Upgrading...
                                         </>
+                                    )}
+
+                                    {!isUpgrading && (subscriptions && subscriptions.plan === plan.name ? (
+                                        <>
+                                            <Check className="w-4 h-4" />
+                                            Current Plan
+                                        </>
                                     ) : (
                                         <>
-                                            Get Started
+                                            Upgrade Now
                                             <ChevronRight className="w-4 h-4" />
                                         </>
-                                    )}
+                                    ))}
+
+                                    
                                 </button>
                             </div>
                         );

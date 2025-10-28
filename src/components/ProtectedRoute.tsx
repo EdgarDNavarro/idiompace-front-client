@@ -15,6 +15,7 @@ export function ProtectedLayout() {
 
     useEffect(() => {
         const listSubscriptions = async () => {
+            setLoading(true);
             try {
                 const subscriptionData = await authClient.subscription.list({
                     query: {
@@ -43,6 +44,8 @@ export function ProtectedLayout() {
         }
         if(data) {
             listSubscriptions()
+        } else {
+            setLoading(false);
         }
     }, [data])
 

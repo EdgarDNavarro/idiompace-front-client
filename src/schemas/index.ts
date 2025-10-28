@@ -1,15 +1,5 @@
 import { z } from "zod";
 
-export const TestSchema = z.object({
-    id: z.number(),
-    ask: z.string(),
-    answer: z.string(),
-    phrase: z.string(),
-    storyId: z.number(),
-    createdAt: z.string().optional(),
-    updatedAt: z.string().optional(),
-});
-
 export const StreakSchema = z.object({
     id: z.number(),
     currentStreak: z.number(),
@@ -59,7 +49,8 @@ export const StorySchema = z.object({
     categories: z.array(z.string()),
     is_interactive: z.boolean(),
     level: z.string(),
-    tests: z.array(TestSchema),
+    voice: z.string(),
+    userId: z.string().nullable(),
     vocabularies: z.array(VocabularySchema),
     exercises: z.array(ExerciseSchema),
     createdAt: z.string(),
@@ -98,8 +89,6 @@ export const FlashcardSchema = z.object({
     updatedAt: z.string(),
 });
 
-
-
 export const DailySchema = z.object({
     id: z.number().optional(),
     phrase: z.string(),
@@ -110,170 +99,6 @@ export const DailySchema = z.object({
     updatedAt: z.string().optional(),
 });
 
-const VerbPersonSchema = z.object({
-    singular_first_person: z.string(),
-    singular_second_person: z.string(),
-    singular_formal_second_person: z.string(),
-    singular_third_person: z.string(),
-    plural_first_person: z.string(),
-    plural_second_person: z.string(),
-    plural_formal_second_person: z.string(),
-    plural_third_person: z.string(),
-});
-
-const NonPersonalSchema = z.object({
-    infinitive: z.string(),
-    participle: z.string(),
-    gerund: z.string(),
-    compound_infinitive: z.string(),
-    compound_gerund: z.string(),
-});
-
-const IndicativeSchema = z.object({
-    present: VerbPersonSchema,
-    present_perfect: VerbPersonSchema,
-    imperfect: VerbPersonSchema,
-    past_perfect: VerbPersonSchema,
-    preterite: VerbPersonSchema,
-    past_anterior: VerbPersonSchema,
-    future: VerbPersonSchema,
-    future_perfect: VerbPersonSchema,
-    conditional: VerbPersonSchema,
-    conditional_perfect: VerbPersonSchema,
-});
-
-const SubjunctiveSchema = z.object({
-    present: VerbPersonSchema,
-    present_perfect: VerbPersonSchema,
-    imperfect: VerbPersonSchema,
-    past_perfect: VerbPersonSchema,
-    future: VerbPersonSchema,
-    future_perfect: VerbPersonSchema,
-});
-
-const ImperativeSchema = z.object({
-    singular_second_person: z.string(),
-    singular_formal_second_person: z.string(),
-    plural_second_person: z.string(),
-    plural_formal_second_person: z.string(),
-});
-
-const ConjugationsSchema = z.object({
-    non_personal: NonPersonalSchema,
-    indicative: IndicativeSchema,
-    subjunctive: SubjunctiveSchema,
-    imperative: ImperativeSchema,
-});
-
-
-export const RaeSchema = z.object({
-    word: z.string(),
-    meanings: z.array(
-        z.object({
-            origin: z.object({
-                raw: z.string(),
-                type: z.string(),
-                voice: z.string().nullable().optional(),
-                text: z.string(),
-            }).optional(),
-            senses: z.array(
-                z.object({
-                    raw: z.string(),
-                    meaning_number: z.number(),
-                    category: z.string(),
-                    usage: z.string().nullable().optional(),
-                    verb_category: z.string().nullable().optional(),
-                    description: z.string(),
-                    synonyms: z.array(z.string()).nullable().optional(),
-                    antonyms: z.array(z.string()).nullable().optional(),
-                })
-            ),
-            conjugations: ConjugationsSchema.optional(),
-        })
-    ),
-    suggestions: z.any().nullable().optional(),
-});
-
-
-export const EnglishEntrySchema = z.object({
-    word: z.string(),
-    phonetic: z.string().optional(),
-    phonetics: z.array(
-        z.object({
-            text: z.string().optional(),
-            audio: z.string().optional(),
-            sourceUrl: z.string().optional(),
-            license: z
-                .object({
-                    name: z.string(),
-                    url: z.string(),
-                }).optional(),
-        })
-    ),
-    meanings: z.array(
-        z.object({
-            partOfSpeech: z.string(),
-            definitions: z.array(
-                z.object({
-                    definition: z.string(),
-                    synonyms: z.array(z.string()),
-                    antonyms: z.array(z.string()),
-                    example: z.string().optional(),
-                })
-            ),
-            synonyms: z.array(z.string()),
-            antonyms: z.array(z.string()),
-        })
-    ),
-    license: z
-        .object({
-            name: z.string(),
-            url: z.string(),
-        }).optional(),
-    sourceUrls: z.array(z.string()),
-});
-
-export const TranslationAPISchema = z.object({
-    "source-language": z.string(),
-    "source-text": z.string(),
-    "destination-language": z.string(),
-    "destination-text": z.string(),
-
-    pronunciation: z.object({
-        "source-text-phonetic": z.string().nullable().optional(),
-        "source-text-audio": z.string().url().nullable().optional(),
-        "destination-text-audio": z.string().url().nullable().optional(),
-    }),
-
-    translations: z.object({
-        "all-translations": z.array(
-            z.tuple([
-                z.string(), // palabra traducida (ej: "comer")
-                z.array(z.string()), // lista de posibles significados (ej: ["eat", "lunch", ...])
-            ])
-        ),
-        "possible-translations": z.array(z.string()).nullable().optional(),
-        "possible-mistakes": z.array(z.string()).nullable().optional(),
-    }),
-
-    definitions: z.array(
-        z.object({
-            "part-of-speech": z.string(),
-            definition: z.string(),
-            example: z.string().nullable().optional(),
-            "other-examples": z.array(z.string()).nullable().optional(),
-            synonyms: z.record(z.string(), z.array(z.string())).nullable().optional(),
-            // ejemplo:
-            // {
-            //   "informal": ["guzzle", "nosh"],
-            //   "": ["consume", "devour"],
-            //   "rare": ["ingurgitate"]
-            // }
-        })
-    ).nullable().optional(),
-
-    "see-also": z.array(z.array(z.string())).nullable().optional(),
-});
 
 export type Vocabulary = z.infer<typeof VocabularySchema>;
 export type Exercise = z.infer<typeof ExerciseSchema>;
@@ -284,9 +109,6 @@ export type Daily = z.infer<typeof DailySchema>;
 export type Deck = z.infer<typeof DeckSchema>;
 export type Flashcard = z.infer<typeof FlashcardSchema>;
 
-export type Test = z.infer<typeof TestSchema>;
 export type Phrase = z.infer<typeof PhraseSchema>;
 export type Story = z.infer<typeof StorySchema>;
 export type PaginationMeta = z.infer<typeof paginationMetaSchema>;
-export type EnglishEntry = z.infer<typeof EnglishEntrySchema>;
-export type TranslationAPI = z.infer<typeof TranslationAPISchema>;

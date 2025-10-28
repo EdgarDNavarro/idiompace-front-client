@@ -7,9 +7,6 @@ import { ProtectedLayout } from "./components/ProtectedRoute";
 import StudyFlashcards from "./components/flashcards/StudyFlashcards";
 import ManageDecks from "./components/flashcards/ManageDecks";
 import FlashcardsDeck from "./components/flashcards/FlashcardsDeck";
-import Spanish from "./components/dictionaries/Spanish";
-import English from "./components/dictionaries/English";
-import Translation from "./components/dictionaries/Translation";
 import ListPlans from "./components/plans/ListPlans";
 
 function App() {
@@ -28,9 +25,6 @@ function App() {
         <Route path="/flashcards/deck/:deckId" element={<FlashcardsDeck />} />
         <Route path="/flashcards/try/:deckId" element={<StudyFlashcards />} />
 
-        <Route path="/dictionary/spanish" element={<Spanish />} />
-        <Route path="/dictionary/english" element={<English />} />
-        <Route path="/dictionary/translation" element={<Translation />} />
       </Route>
     </Routes>
   );
