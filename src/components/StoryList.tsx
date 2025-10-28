@@ -1,4 +1,4 @@
-import { BookOpen, Users, Play, Search } from "lucide-react";
+import { BookOpen, Users, Play, Search, Mic2 } from "lucide-react";
 import { PaginationMeta, Story } from "../schemas";
 import { useEffect, useState } from "react";
 import { getStories } from "../services/stories";
@@ -44,6 +44,7 @@ export const StoryList = () => {
         try {
             const result = await getStories(page, meta.limit, preferIdiom, title, category);
             setStories(result.data);
+            console.log(result.data);
             setMeta(result.meta);
         } catch (error) {
             console.log(error);
@@ -183,6 +184,15 @@ export const StoryList = () => {
                             </div>
                         </div>
 
+                        <div
+                            className={`text-xs text-gray-300 font-medium w-full mb-4`}
+                        >
+                                <div className="flex items-center gap-1">
+                                    <Mic2 className="w-4 h-4 text-gray-400" />
+                                    {story.voice}
+                                </div>
+                        </div>
+
                         {/* Description */}
                         <p className="text-gray-400 mb-4 line-clamp-2">
                             {story.description}
@@ -213,15 +223,24 @@ export const StoryList = () => {
                                 </div>
                             </div>
 
-                            <span
-                                className={`px-3 py-1 rounded-full text-xs font-medium ${getLevelColor(
-                                    story.level
-                                )}`}
-                            >
-                                {story.level}
-                            </span>
+                            <div>
+
+                                <span
+                                    className={`px-3 py-1 rounded-full text-xs font-medium ${getLevelColor(
+                                        story.level
+                                    )}`}
+                                >
+                                    {story.level}
+                                </span>
+
+                            </div>
                         </div>
+
+
+
                     </div>
+
+                    
                 ))}
             </div>
 

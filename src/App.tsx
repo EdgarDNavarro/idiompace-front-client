@@ -8,6 +8,7 @@ import StudyFlashcards from "./components/flashcards/StudyFlashcards";
 import ManageDecks from "./components/flashcards/ManageDecks";
 import FlashcardsDeck from "./components/flashcards/FlashcardsDeck";
 import ListPlans from "./components/plans/ListPlans";
+import GenerateStory from "./components/stories/GenerateStory";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/flashcards" element={<ManageDecks />} />
         <Route path="/flashcards/deck/:deckId" element={<FlashcardsDeck />} />
         <Route path="/flashcards/try/:deckId" element={<StudyFlashcards />} />
+        <Route path="/generate-story" element={<GenerateStory />} />
 
       </Route>
     </Routes>

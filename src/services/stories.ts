@@ -1,6 +1,6 @@
 import api from "../conf/axios";
 import { z } from "zod";
-import { paginationMetaSchema, StorySchema } from "../schemas";
+import { paginationMetaSchema, Story, StorySchema } from "../schemas";
 
 type StoryParams = {
     page?: number;
@@ -54,3 +54,22 @@ export const deleteStory = async (id: string) => {
     const response = await api.delete(`/stories/${id}`);
     return response.data;
 };
+
+type GenerateStoryParams = {
+    idiom: string;
+    voice_id: string;
+    voice_name: string;
+    categories: string[];
+    level: string;
+}
+
+export const generateStoryWithIA = async (storyData: GenerateStoryParams) => {
+    try {
+        const response = await api.post('/stories/with-ia', storyData);
+        if(!response.data.success) return false
+        return response.data.success;
+    } catch (error) {
+        console.error("Error generating story with IA:", error);
+        throw error;
+    }
+}

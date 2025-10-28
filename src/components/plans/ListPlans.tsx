@@ -31,7 +31,6 @@ const plans: Plan[] = [
             "Access to all stories library",
             "Vocabulary and exercises",
             "Audio pronunciation",
-            "Flashcard decks creation and management",
             "Personalized flashcards",
         ]
     },
@@ -64,7 +63,6 @@ const plans: Plan[] = [
             "Generate 30 AI stories per month",
             "Import/Export flashcards (CSV)",
             "Anki compatibility",
-            "White-label options (coming soon)"
         ],
         recommended: true
     }
