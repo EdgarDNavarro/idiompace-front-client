@@ -40,6 +40,11 @@ export const getStoryById = async (id: string) => {
     return response.data;
 };
 
+export const getStoryByVoice = async (voice: string, idiom: string) => {
+    const response = await api.get(`/stories/voice/${voice}/idiom/${idiom}`);
+    return response.data;
+};
+
 export const createStory = async (storyData: any) => {
     const response = await api.post('/stories', storyData);
     return response.data;
@@ -64,12 +69,19 @@ type GenerateStoryParams = {
 }
 
 export const generateStoryWithIA = async (storyData: GenerateStoryParams) => {
-    try {
-        const response = await api.post('/stories/with-ia', storyData);
-        if(!response.data.success) return false
-        return response.data.success;
-    } catch (error) {
-        console.error("Error generating story with IA:", error);
-        throw error;
-    }
+   
+    const response = await api.post('/stories/with-ia', storyData);
+    if(!response.data.success) return false
+    return response.data.success;
+
+}
+
+export const addOneUsage = async (id: number) => {
+    const response = await api.put(`/stories/usage/${id}`);
+    return response.data;
+}
+
+export const getUsageByUserId = async (userId: string) => {
+    const response = await api.get(`/stories/usage/${userId}`);
+    return response.data;
 }

@@ -3,9 +3,11 @@ import { authClient } from "../../lib/auth-client";
 import { Spinner } from "../loaders/Spinner";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { generateStoryWithIA } from "../../services/stories";
+import { addOneUsage, generateStoryWithIA, getStoryByVoice, getUsageByUserId } from "../../services/stories";
 import { Brain, Play, Globe, Users, Zap, ArrowRight, Crown, CheckCircle, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
+import { ExampleAudioPlayer } from "./ExampleAudioPlayer";
+import { isAxiosError } from "axios";
 
 interface Voice {
     id: string;
@@ -20,6 +22,18 @@ interface FormData {
     voice_name: string;
     categories: string[];
     level: "low" | "middle" | "high";
+}
+
+interface ExampleVoice {
+    title: string;
+    level: string;
+}
+
+interface CachedExampleVoice {
+    voice: string;
+    idiom: "English" | "Spanish";
+    title: string;
+    level: string;
 }
 
 const CATEGORIES_ENGLISH = [
@@ -59,13 +73,16 @@ const LEVELS = [
     { value: "high", label: "Advanced", description: "Complex vocabulary and advanced structures" }
 ];
 
-// LocalStorage key for tracking stories generated this month
-const STORIES_COUNTER_KEY = "idiompace_stories_generated";
-
 const GenerateStory = () => {
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
+    const [usageId, setUsageId] = useState<number | null>(null);
+    const [selectedExampleVoice, setSelectedExampleVoice] = useState<ExampleVoice>({
+        title: "",
+        level: ""
+    });
+    const [cachedExampleVoice, setCachedExampleVoice] = useState<CachedExampleVoice[]>([])
     const [generating, setGenerating] = useState(false);
     const [subscriptions, setSubscriptions] = useState<Subscription | undefined>(undefined);
     const [storiesGenerated, setStoriesGenerated] = useState(0);
@@ -79,47 +96,65 @@ const GenerateStory = () => {
         level: "middle"
     });
 
-    // Get stories counter from localStorage
-    const getStoriesCount = (): number => {
-        const stored = localStorage.getItem(STORIES_COUNTER_KEY);
-        if (!stored) return 0;
-        
-        try {
-            const data = JSON.parse(stored);
-            const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const getVoiceExample = async (voice: string) => {
+        const cached = cachedExampleVoice.find(item => item.voice === voice && item.idiom === formData.idiom);
+        if(cached) {
+            setSelectedExampleVoice({
+                title: cached.title,
+                level: cached.level
+            });
+            console.log("cached");
             
-            if (data.month === currentMonth) {
-                return data.count;
+            return;
+        }
+        try {
+            const example = await getStoryByVoice(voice, formData.idiom);
+            if(example.data) {
+                setSelectedExampleVoice({
+                    title: example.data.title,
+                    level: example.data.level
+                });
+                setCachedExampleVoice(prev => ([...prev, {
+                    voice,
+                    idiom: formData.idiom,
+                    title: example.data.title,
+                    level: example.data.level
+                }]));
+                console.log("fechted");
+                
             } else {
-                // Reset counter for new month
-                localStorage.setItem(STORIES_COUNTER_KEY, JSON.stringify({
-                    month: currentMonth,
-                    count: 0
-                }));
-                return 0;
+                setSelectedExampleVoice({
+                    title: "",
+                    level: ""
+                });
             }
-        } catch {
-            return 0;
+            console.log("Voice Example:", example);
+        } catch (error) {
+            if(isAxiosError(error) && error.response && error.response.status === 404) {
+                toast.error("No example story found for this voice and language. Crea una!");
+            }
+            setSelectedExampleVoice({
+                title: "",
+                level: ""
+            });
+        }
+    }
+
+    // Get stories counter from localStorage
+    const getStoriesCount = async () => {
+
+        try {
+            const usage = await getUsageByUserId(data?.user.id || "");
+            if(usage.data) {
+                setStoriesGenerated(usage.data.storiesUsed || 0);
+                setUsageId(usage.data.id);
+            }
+            
+            
+        } catch (error) {
+            console.log("Error getting stories count:", error);
         }
     };
-
-    // Update stories counter
-    const incrementStoriesCount = () => {
-        const currentMonth = new Date().toISOString().slice(0, 7);
-        const newCount = storiesGenerated + 1;
-        
-        localStorage.setItem(STORIES_COUNTER_KEY, JSON.stringify({
-            month: currentMonth,
-            count: newCount
-        }));
-        
-        setStoriesGenerated(newCount);
-    };
-
-    useEffect(() => {
-        const count = getStoriesCount();
-        setStoriesGenerated(count);
-    }, []);
 
     useEffect(() => {
         const listSubscriptions = async () => {
@@ -150,6 +185,7 @@ const GenerateStory = () => {
         
         if(data) {
             listSubscriptions();
+            getStoriesCount()
         } else {
             setLoading(false);
         }
@@ -167,6 +203,7 @@ const GenerateStory = () => {
     const currentCategories = formData.idiom === "English" ? CATEGORIES_ENGLISH : CATEGORIES_SPANISH;
 
     const handleVoiceSelect = (voice: Voice) => {
+        getVoiceExample(voice.name);
         setFormData(prev => ({
             ...prev,
             voice_id: voice.id,
@@ -204,9 +241,11 @@ const GenerateStory = () => {
                 level: formData.level,
             });
 
-            if (result) {
-                incrementStoriesCount();
+            if (result && usageId) {
+                
                 toast.success("Story generation started! You'll be notified when it's ready (~3 minutes)");
+                await addOneUsage(usageId)
+                setStoriesGenerated(prev => prev + 1);
                 // Optionally redirect or reset form
                 setFormData(prev => ({
                     ...prev,
@@ -331,6 +370,15 @@ const GenerateStory = () => {
                             <Play className="w-5 h-5 text-green-400" />
                             Voice
                         </label>
+
+                        {selectedExampleVoice.title && (
+                            
+                            <ExampleAudioPlayer 
+                                level={selectedExampleVoice.level}
+                                title={selectedExampleVoice.title}
+                            />
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {currentVoices.map((voice) => (
                                 <button
