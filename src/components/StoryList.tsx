@@ -1,55 +1,60 @@
-import { BookOpen, Users, Play, Search, Mic2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { PaginationMeta, Story } from "../schemas";
 import { useEffect, useState } from "react";
 import { getStories } from "../services/stories";
-import { useNavigate } from "react-router-dom";
-import { Pagination } from "./Pagination";
 import ViewDailyPhrase from "./daily/ViewDailyPhrase";
 import DailyGrid from "./daily/DailyGrid";
 import { StreakCounter } from "./streak/StreakCounter";
 import { createStreak, getStreaks } from "../services/streaks";
 import { isAxiosError } from "axios";
-
-const CATEGORIES = [
-    "Infantil", "Educativo", "Ciencia", "Ficción", "Conversacion", "Trabajo", "Viajes", "Comida", "Programacion",
-    "Salud", "Negocios", "Tecnologia", "Universidad", "Escuela", "Hogar", "Deportes", "Cuerpo humano", "Animales",
-    "Naturaleza", "Numeros", "Pasado continuo", "Presente simple", "Futuro going to", "Presente perfecto",
-    "Past perfect", "Reported speech", "Voz pasiva", "Futuro will", "Presente continuo", "Past simple",
-    "Condicionales", "Modales", "Phrasal verbs"
-];
+import { CATEGORIES_ENGLISH, CATEGORIES_SPANISH, spanishVoices, englishVoices } from "../schemas/categories";
+import { StoriesGrid } from "./stories/StoriesGrid";
 
 export const StoryList = () => {
     const [stories, setStories] = useState<Story[]>([]);
+    const [myStories, setMyStories] = useState<Story[]>([]);
     const [meta, setMeta] = useState<PaginationMeta>({
         total: 0,
         page: 1,
-        limit: 10,
+        limit: 12,
+        totalPages: 1,
+    });
+    const [myMeta, setMyMeta] = useState<PaginationMeta>({
+        total: 0,
+        page: 1,
+        limit: 12,
         totalPages: 1,
     });
 
     const [idiom, setIdiom] = useState("English");
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState("");
+    const [voice, setVoice] = useState("");
     const [searching, setSearching] = useState(false);
     const [streak, setStreak] = useState({ currentStreak: 0, longestStreak: 0 });
-
-    const navigate = useNavigate();
-
-    const goToStory = (id: Story["id"]) => {
-        navigate("/stories/" + id);
-    };
+    const currentCategories = idiom === "English" ? CATEGORIES_ENGLISH : CATEGORIES_SPANISH;
+    const currentVoices = idiom === "English" ? englishVoices : spanishVoices;
 
     const getFromApiStories = async (page = 1, preferIdiom = idiom) => {
         setSearching(true);
         try {
-            const result = await getStories(page, meta.limit, preferIdiom, title, category);
+            const result = await getStories(page, meta.limit, preferIdiom, title, category, voice);
             setStories(result.data);
-            console.log(result.data);
             setMeta(result.meta);
         } catch (error) {
             console.log(error);
         } finally {
             setSearching(false);
+        }
+    };
+
+    const getMyStories = async (page = 1, preferIdiom = idiom) => {
+        try {
+            const result_my = await getStories(page, myMeta.limit, preferIdiom, title, category, voice, true);
+            setMyStories(result_my.data);
+            setMyMeta(result_my.meta);
+        } catch (error) {
+            console.log(error);
         }
     };
 
@@ -76,9 +81,11 @@ export const StoryList = () => {
         if (storedIdiom) {
             setIdiom(storedIdiom);
             getFromApiStories(1, storedIdiom);
+            getMyStories(1, storedIdiom);
         } else {
             localStorage.setItem("preferredIdiom", idiom);
             getFromApiStories(1, idiom);
+            getMyStories(1, idiom);
         }
 
     }, []);
@@ -92,19 +99,7 @@ export const StoryList = () => {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         getFromApiStories(1);
-    };
-
-    const getLevelColor = (level: string) => {
-        switch (level) {
-            case "low":
-                return "text-green-500 border border-green-500";
-            case "middle":
-                return "text-yellow-400 border border-yellow-400";
-            case "high":
-                return "text-red-400 border border-red-400";
-            default:
-                return "text-gray-800";
-        }
+        getMyStories(1);
     };
 
     return (
@@ -152,8 +147,22 @@ export const StoryList = () => {
                         className="px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white"
                     >
                         <option value="">Todas</option>
-                        {CATEGORIES.map(cat => (
+                        {currentCategories.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label className="block text-xs text-gray-400 mb-1">Voz</label>
+                    <select
+                        value={voice}
+                        onChange={e => setVoice(e.target.value)}
+                        className="px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white"
+                    >
+                        <option value="">Todas</option>
+                        {currentVoices.map(voice => (
+                            <option key={voice.id} value={voice.name}>{voice.name}</option>
                         ))}
                     </select>
                 </div>
@@ -167,86 +176,19 @@ export const StoryList = () => {
                 </button>
             </form>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {stories.map((story) => (
-                    <div
-                        key={story.id}
-                        onClick={() => goToStory(story.id)}
-                        className="bg-neutral-900 rounded-xl shadow-md border border-neutral-800 p-6 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group"
-                    >
-                        {/* Header */}
-                        <div className="flex justify-between items-start mb-4">
-                            <h3 className="text-xl font-semibold text-white group-hover:text-green-400 transition-colors">
-                                {story.title}
-                            </h3>
-                            <div className="bg-neutral-800 p-2 rounded-lg group-hover:bg-neutral-700 transition-colors">
-                                <Play className="w-5 h-5 text-green-500" />
-                            </div>
-                        </div>
+            <StoriesGrid 
+                stories={myStories} 
+                title="Mis Historias" 
+                meta={myMeta}
+                onPageChange={getMyStories}
+            />
 
-                        <div
-                            className={`text-xs text-gray-300 font-medium w-full mb-4`}
-                        >
-                                <div className="flex items-center gap-1">
-                                    <Mic2 className="w-4 h-4 text-gray-400" />
-                                    {story.voice}
-                                </div>
-                        </div>
-
-                        {/* Description */}
-                        <p className="text-gray-400 mb-4 line-clamp-2">
-                            {story.description}
-                        </p>
-
-                        {/* Categorías */}
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            {story.categories.map((cat, idx) => (
-                                <span
-                                    key={idx}
-                                    className="bg-green-800/30 text-green-300 px-2 py-0.5 rounded-full text-xs font-medium border border-green-700"
-                                >
-                                    {cat}
-                                </span>
-                            ))}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                                <div className="flex items-center gap-1">
-                                    <BookOpen className="w-4 h-4 text-gray-400" />
-                                    {story.idiom}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <Users className="w-4 h-4 text-gray-400" />
-                                    {story.phrases.length} phrases
-                                </div>
-                            </div>
-
-                            <div>
-
-                                <span
-                                    className={`px-3 py-1 rounded-full text-xs font-medium ${getLevelColor(
-                                        story.level
-                                    )}`}
-                                >
-                                    {story.level}
-                                </span>
-
-                            </div>
-                        </div>
-
-
-
-                    </div>
-
-                    
-                ))}
-            </div>
-
-            {meta && (
-                <Pagination meta={meta} onPageChange={getFromApiStories} />
-            )}
+            <StoriesGrid 
+                stories={stories} 
+                title="Historias de la Comunidad" 
+                meta={meta}
+                onPageChange={getFromApiStories}
+            />
 
             <ViewDailyPhrase />
 

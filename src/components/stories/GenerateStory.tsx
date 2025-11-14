@@ -8,14 +8,7 @@ import { Brain, Play, Globe, Users, Zap, ArrowRight, Crown, CheckCircle, AlertTr
 import toast from "react-hot-toast";
 import { ExampleAudioPlayer } from "./ExampleAudioPlayer";
 import { isAxiosError } from "axios";
-
-interface Voice {
-    id: string;
-    name: string;
-    accent: string;
-    gender: string;
-}
-
+import { CATEGORIES_ENGLISH, CATEGORIES_SPANISH, englishVoices, spanishVoices, Voice } from "../../schemas/categories";
 interface FormData {
     idiom: "English" | "Spanish";
     voice_id: string;
@@ -35,37 +28,6 @@ interface CachedExampleVoice {
     title: string;
     level: string;
 }
-
-const CATEGORIES_ENGLISH = [
-    "Infantil", "Educativo", "Ciencia", "Ficción", "Conversacion", "Trabajo", "Viajes", "Comida",
-    "Programacion", "Salud", "Negocios", "Tecnologia", "Universidad", "Escuela", "Hogar", "Deportes",
-    "Cuerpo humano", "Animales", "Naturaleza", "Numeros", "Pasado continuo", "Presente simple",
-    "Futuro going to", "Presente perfecto", "Past perfect", "Reported speech", "Voz pasiva",
-    "Futuro will", "Presente continuo", "Past simple", "Condicionales", "Modales", "Phrasal verbs"
-];
-
-const CATEGORIES_SPANISH = [
-    "Infantil", "Educativo", "Ciencia", "Ficción", "Conversación", "Trabajo", "Viajes", "Comida",
-    "Programación", "Salud", "Negocios", "Tecnología", "Universidad", "Escuela", "Hogar", "Deportes",
-    "Cuerpo humano", "Animales", "Naturaleza", "Números", "Pasado continuo", "Presente simple",
-    "Futuro ir a", "Presente perfecto", "Pasado perfecto", "Estilo indirecto", "Voz pasiva",
-    "Futuro", "Presente continuo", "Pasado simple", "Condicionales", "Modales", "Verbos compuestos"
-];
-
-const spanishVoices: Voice[] = [
-    { id: "Nh2zY9kknu6z4pZy6FhD", name: "David Martin", accent: "Spanish", gender: "Male" },
-    { id: "452WrNT9o8dphaYW5YGU", name: "Abel Lz", accent: "Standard", gender: "Male" },
-    { id: "6bNjXphfWPUDHuFkgDt3", name: "Efrayn RS (Epic Voice)", accent: "Spanish", gender: "Male" },
-    { id: "k8cFOyAg7B9qwBlDDNTC", name: "Miguel", accent: "Standard", gender: "Male" }
-];
-
-const englishVoices: Voice[] = [
-    { id: "452WrNT9o8dphaYW5YGU", name: "Abel Lz", accent: "British", gender: "Male" },
-    { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", accent: "British", gender: "Male" },
-    { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica", accent: "American", gender: "Female" },
-    { id: "6bNjXphfWPUDHuFkgDt3", name: "Efrayn RS (Epic Voice)", accent: "American", gender: "Male" },
-    { id: "k8cFOyAg7B9qwBlDDNTC", name: "Miguel", accent: "American", gender: "Male" }
-];
 
 const LEVELS = [
     { value: "low", label: "Beginner", description: "Simple vocabulary and basic grammar" },
