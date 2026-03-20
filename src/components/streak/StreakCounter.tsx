@@ -81,7 +81,7 @@ export function StreakCounter({
                        
 
                         <img
-                            src="assets\Fuego.png"
+                            src="/assets/Fuego.png"
                             alt="Flame"
                             className={`h-16 w-16 ${accentColor.split(" ")[1]}`}
                         />
@@ -159,7 +159,7 @@ export function StreakCounter({
                         >
                             {currentStreak >= m ? (
                                 <img
-                                    src="assets\Fuego.png"
+                                    src="/assets/Fuego.png"
                                     alt="Flame"
                                     className={`h-8 w-8 ${accentColor.split(" ")[1]}`}
                                 />
