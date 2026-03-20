@@ -1,4 +1,3 @@
-import { Flame } from "lucide-react";
 
 interface StreakCounterProps {
     currentStreak: number;
@@ -60,11 +59,15 @@ export function StreakCounter({
         return "¡Sigue así!";
     };
     return (
+
+        // <div
+        //     className={`relative overflow-hidden rounded-xl bg-gradient-to-br from-green-400/10 via-green-400/5 to-transparent p-6 shadow-sm ring-1 ring-green-400/20 transition-all hover:shadow-md hover:ring-green-400/30`}
+        // >
         <div
-            className={`relative overflow-hidden rounded-xl bg-gradient-to-br from-green-400/10 via-green-400/5 to-transparent p-6 shadow-sm ring-1 ring-green-400/20 transition-all hover:shadow-md hover:ring-green-400/30`}
+            className={`relative rounded-xl bg-gradient-to-br p-6 shadow-sm transition-all hover:shadow-md mx-auto `}
         >
             {/* Background decoration */}
-            <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-green-400/5 blur-2xl" />
+            <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-green-400/10 blur-2xl" />
 
             <div className="relative flex items-center gap-6">
                 {/* Flame icon with glow effect */}
@@ -73,11 +76,14 @@ export function StreakCounter({
                         className={`absolute inset-0 animate-pulse rounded-full ${accentColor}/20 blur-xl`}
                     />
                     <div
-                        className={`relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${progressColor} shadow-lg`}
+                        className={`relative flex h-16 w-16 items-center justify-center shadow-lg`}
                     >
-                        <Flame
-                            className={`h-8 w-8 ${accentColor.split(" ")[1]}`}
-                            fill="currentColor"
+                       
+
+                        <img
+                            src="assets\Fuego.png"
+                            alt="Flame"
+                            className={`h-16 w-16 ${accentColor.split(" ")[1]}`}
                         />
                     </div>
                 </div>
@@ -149,9 +155,15 @@ export function StreakCounter({
                     <div key={m} className={`flex flex-col items-center`}>
 
                         <div className={`h-8 w-8 rounded-full flex items-center justify-center relative
-                            ${currentStreak >= m ? "bg-yellow-300 text-red-700" : "bg-neutral-800 text-gray-400"}`}
+                            ${currentStreak >= m ? "" : "bg-neutral-800 text-gray-400"}`}
                         >
-                            {currentStreak >= m ? <Flame fill="currentColor"/> : m}
+                            {currentStreak >= m ? (
+                                <img
+                                    src="assets\Fuego.png"
+                                    alt="Flame"
+                                    className={`h-8 w-8 ${accentColor.split(" ")[1]}`}
+                                />
+                            ) : m}
 
                             {currentStreak >= m && (
                                 <div
@@ -160,7 +172,7 @@ export function StreakCounter({
                             )}
 
                         </div>
-                        <span className="text-xs mt-1">{m} días</span>
+                        <span className="text-xs mt-1 hidden sm:block">{m} días</span>
                     </div>
                 ))}
             </div>

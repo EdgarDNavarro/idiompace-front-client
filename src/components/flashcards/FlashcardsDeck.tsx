@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { getFlashcards, deleteFlashcard, deleteDeck } from "../../services/flashcards";
 import { Flashcard } from "../../schemas";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Eye, EyeOff, Pencil, Trash2, Plus, GraduationCap, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Pencil, Trash2, Plus, GraduationCap, ArrowLeft, FileUp } from "lucide-react";
 import CreateFlashcardModal from "./CreateFlashcard";
 import EditFlashcardModal from "./EditFlashcard";
+import UploadCsvModal from "./UploadCsvModal";
 
 const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return "-";
@@ -25,6 +26,7 @@ const FlashcardsDeck: React.FC = () => {
     const [showBack, setShowBack] = useState<{ [id: number]: boolean }>({});
     const [loading, setLoading] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
+    const [uploadCsvModalOpen, setUploadCsvModalOpen] = useState(false);
 
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [selectedFlashcard, setSelectedFlashcard] = useState<Flashcard | null>(null);
@@ -83,6 +85,19 @@ const FlashcardsDeck: React.FC = () => {
         setFlashcards(prev => [flashcard, ...prev]);
     };
 
+    const handleCsvUploaded = async () => {
+        // Recargar las flashcards después de subir el CSV
+        setLoading(true);
+        try {
+            const data = await getFlashcards(deckId as string);
+            setFlashcards(data);
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleDeleteDeck = async () => {
         if (!deckId) return;
         if (!window.confirm("¿Seguro que deseas eliminar este deck y todas sus flashcards? No se puede revertir")) return;
@@ -107,6 +122,13 @@ const FlashcardsDeck: React.FC = () => {
                         <Plus className="w-5 h-5" /> Crear Nueva Flashcard
                     </button>
 
+                    <button
+                        onClick={() => setUploadCsvModalOpen(true)}
+                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition "
+                    >
+                        <FileUp className="w-5 h-5" /> Subir CSV
+                    </button>
+
                     <Link
                         to={`/flashcards/try/${deckId}`}
                         className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition"
@@ -127,14 +149,21 @@ const FlashcardsDeck: React.FC = () => {
             </div>
             
             {deckId && (
-                <CreateFlashcardModal
-                    open={modalOpen}
-                    onClose={() => setModalOpen(false)}
-                    onCreated={handleCreated}
-                    deckId={Number(deckId)}
-                />
+                <>
+                    <CreateFlashcardModal
+                        open={modalOpen}
+                        onClose={() => setModalOpen(false)}
+                        onCreated={handleCreated}
+                        deckId={Number(deckId)}
+                    />
+                    <UploadCsvModal
+                        open={uploadCsvModalOpen}
+                        onClose={() => setUploadCsvModalOpen(false)}
+                        deckId={Number(deckId)}
+                        onUploaded={handleCsvUploaded}
+                    />
+                </>
             )}
-
 
             <EditFlashcardModal
                 open={editModalOpen}

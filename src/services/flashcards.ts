@@ -96,3 +96,21 @@ export const markFlashcardWrong = async (id: number) => {
     const response = await api.put(`/flashcards/mark-wrong/${id}`);
     return response.data;
 };
+
+// Subir CSV para crear flashcards masivamente
+export const uploadFlashcardsCsv = async (file: File, deckId: number, delimiter: string = ",") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("deckId", deckId.toString());
+    formData.append("delimiter", delimiter);
+
+    const response = await api.post("/flashcards/decks/flashcards/upload-csv", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+
+    console.log(response.data);
+    
+    return response.data;
+};

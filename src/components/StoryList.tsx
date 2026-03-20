@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search, Play } from "lucide-react";
 import { PaginationMeta, Story } from "../schemas";
 import { useEffect, useState } from "react";
 import { getStories } from "../services/stories";
@@ -104,49 +104,54 @@ export const StoryList = () => {
 
     return (
         <div className="space-y-4">
-            <h1 className="text-3xl font-bold text-gray-100 mb-8">
-                English Learning Stories
-            </h1>
+            <div className="  ">
+                <h1 className="text-3xl text-center font-bold text-gray-100 mb-2">
+                    English Learning Stories
+                </h1>
 
-            <StreakCounter 
-                currentStreak={streak.currentStreak}
-                longestStreak={streak.longestStreak}
-            />
+                <h3 className="text-center text-lg text-gray-400 mb-4">Crea y Explora historias para aprender Ingles</h3>
+
+                <StreakCounter 
+                    currentStreak={streak.currentStreak}
+                    longestStreak={streak.longestStreak}
+                />
+            </div>
+
 
             {/* Barra de búsqueda */}
             <form
                 onSubmit={handleSearch}
-                className="flex flex-wrap gap-4 items-end mb-8 bg-neutral-900 p-4 rounded-xl border border-neutral-800 shadow"
+                className="flex flex-wrap gap-4 items-end pb-4"
             >
                 <div>
-                    <label className="block text-xs text-gray-400 mb-1">Idioma</label>
+                    
                     <select
                         value={idiom}
                         onChange={handleIdiomChange}
-                        className="px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white"
+                        className="filter-select px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-gray-400"
                     >
                         <option value="English">English</option>
                         <option value="Spanish">Spanish</option>
                     </select>
                 </div>
-                <div className="flex-1 min-w-[200px]">
-                    <label className="block text-xs text-gray-400 mb-1">Título</label>
+                <div className="relative flex-1 min-w-[200px]">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                     <input
                         type="text"
                         value={title}
                         onChange={e => setTitle(e.target.value)}
-                        placeholder="Buscar por título"
-                        className="px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white w-full"
+                        placeholder="Buscar por título..."
+                        className="px-3 py-2 pl-9 pr-10 rounded bg-neutral-800 border border-neutral-700 text-gray-400 w-full"
                     />
+                    <Play className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                 </div>
                 <div>
-                    <label className="block text-xs text-gray-400 mb-1">Categoría</label>
                     <select
                         value={category}
                         onChange={e => setCategory(e.target.value)}
-                        className="px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white"
+                        className="filter-select px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-gray-400"
                     >
-                        <option value="">Todas</option>
+                        <option value="">Todas las categorias</option>
                         {currentCategories.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
                         ))}
@@ -154,13 +159,12 @@ export const StoryList = () => {
                 </div>
 
                 <div>
-                    <label className="block text-xs text-gray-400 mb-1">Voz</label>
                     <select
                         value={voice}
                         onChange={e => setVoice(e.target.value)}
-                        className="px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-white"
+                        className="filter-select px-3 py-2 rounded bg-neutral-800 border border-neutral-700 text-gray-400"
                     >
-                        <option value="">Todas</option>
+                        <option value="">Todas las voces</option>
                         {currentVoices.map(voice => (
                             <option key={voice.id} value={voice.name}>{voice.name}</option>
                         ))}
