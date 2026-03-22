@@ -9,6 +9,7 @@ import ManageDecks from "./components/flashcards/ManageDecks";
 import FlashcardsDeck from "./components/flashcards/FlashcardsDeck";
 import ListPlans from "./components/plans/ListPlans";
 import GenerateStory from "./components/stories/GenerateStory";
+import SpeechWithIA from "./components/speech/SpeechWithIA";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/flashcards/deck/:deckId" element={<FlashcardsDeck />} />
         <Route path="/flashcards/try/:deckId" element={<StudyFlashcards />} />
         <Route path="/generate-story" element={<GenerateStory />} />
+        <Route path="/speech-with-ia" element={<SpeechWithIA />} />
 
       </Route>
     </Routes>

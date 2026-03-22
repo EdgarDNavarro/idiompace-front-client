@@ -99,6 +99,9 @@ export const DailySchema = z.object({
     updatedAt: z.string().optional(),
 });
 
+// Re-export speech schemas
+export * from './speech';
+
 
 export type Vocabulary = z.infer<typeof VocabularySchema>;
 export type Exercise = z.infer<typeof ExerciseSchema>;

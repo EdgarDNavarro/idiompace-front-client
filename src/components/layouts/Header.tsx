@@ -1,4 +1,4 @@
-import { BookOpen, User2, LogOut, CreditCard, NotebookPen } from "lucide-react";
+import { BookOpen, User2, LogOut, CreditCard, NotebookPen, PhoneCall } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import { useEffect, useRef, useState } from "react";
@@ -67,6 +67,7 @@ function Header() {
 
                         <Link to={"/flashcards"} className="w-full flex items-center gap-2 text-left px-3 py-2 rounded hover:bg-neutral-800 text-gray-200"> <CreditCard className="w-4 h-4"/> Flashcards</Link>
                         <Link to={"/generate-story"} className="w-full flex items-center gap-2 text-left px-3 py-2 rounded hover:bg-neutral-800 text-gray-200"> <NotebookPen className="w-4 h-4"/> Generate Story</Link>
+                        <Link to={"/speech-with-ia"} className="w-full flex items-center gap-2 text-left px-3 py-2 rounded hover:bg-neutral-800 text-gray-200"> <PhoneCall className="w-4 h-4"/> Speech With IA</Link>
 
                         <button
                             onClick={signOut}
