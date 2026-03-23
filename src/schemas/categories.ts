@@ -25,6 +25,7 @@ export const CATEGORIES_SPANISH = [
 ];
 
 export const spanishVoices: Voice[] = [
+    { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", accent: "Native", gender: "Female" },
     { id: "Nh2zY9kknu6z4pZy6FhD", name: "David Martin", accent: "Spanish", gender: "Male" },
     { id: "452WrNT9o8dphaYW5YGU", name: "Abel Lz", accent: "Standard", gender: "Male" },
     { id: "k8cFOyAg7B9qwBlDDNTC", name: "Miguel", accent: "Standard", gender: "Male" },
@@ -33,6 +34,7 @@ export const spanishVoices: Voice[] = [
 ];
 
 export const englishVoices: Voice[] = [
+    { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", accent: "Native", gender: "Female" },
     { id: "452WrNT9o8dphaYW5YGU", name: "Abel Lz", accent: "British", gender: "Male" },
     { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", accent: "British", gender: "Male" },
     { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica", accent: "American", gender: "Female" },

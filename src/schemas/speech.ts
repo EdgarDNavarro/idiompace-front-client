@@ -20,6 +20,8 @@ export const ClearSessionResponseSchema = z.object({
 // Schema para los parámetros de chat
 export const ChatParamsSchema = z.object({
     text: z.string().min(1, "El texto no puede estar vacío"),
+    voiceId: z.string().min(1, "El voiceId no puede estar vacío"),
+    idiom: z.enum(["English", "Spanish"], "El idioma debe ser 'English' o 'Spanish'"),
     sessionId: z.string().uuid("El sessionId debe ser un UUID válido"),
 });
 

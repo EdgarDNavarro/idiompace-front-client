@@ -10,9 +10,9 @@ import {
  * Realiza una conversación con la IA y retorna el stream de audio
  * @throws {Error} Si la validación falla o hay error en la petición
  */
-export const chatWithSpeech = async ({ text, sessionId }: ChatParams): Promise<Response> => {
+export const chatWithSpeech = async ({ text, sessionId, voiceId, idiom }: ChatParams): Promise<Response> => {
     // Validar parámetros con Zod
-    const validatedParams = ChatParamsSchema.parse({ text, sessionId });
+    const validatedParams = ChatParamsSchema.parse({ text, sessionId, voiceId, idiom });
     
     const baseURL = import.meta.env.VITE_API_URL;
     
