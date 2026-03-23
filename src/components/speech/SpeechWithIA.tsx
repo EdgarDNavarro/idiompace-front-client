@@ -4,6 +4,7 @@ import { Scribe, RealtimeEvents, RealtimeConnection, CommitStrategy } from "@ele
 import { chatWithSpeech, getScribeToken, clearChatSession } from "../../services/speech";
 import { englishVoices, spanishVoices } from "../../schemas/categories";
 import { PhoneCallIcon, PhoneOffIcon, SpeechIcon, TimerIcon } from "lucide-react";
+import { Orb } from "../elevelabs/Orb";
 
 // Estados posibles de la llamada
 const CallState = {
@@ -37,6 +38,7 @@ const SpeechWithIA = () => {
     const isMutedRef = useRef(false);      // Para silenciar micro mientras habla la IA
     const warningShownRef = useRef(false); // Para evitar múltiples warnings
     const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const outputVolumeRef = useRef(0);     // Volumen de salida para el orbe (0-1)
 
     // Obtener las voces según el idioma seleccionado
     const currentVoices = idiom === "English" ? englishVoices : spanishVoices;
@@ -52,6 +54,7 @@ const SpeechWithIA = () => {
     const playNextChunk = useCallback(async () => {
         if (audioQueueRef.current.length === 0) {
             isPlayingRef.current = false;
+            outputVolumeRef.current = 0; // Reset volume cuando termina
 
             // La IA terminó de hablar → reactivar micrófono
             setCallState(CallState.LISTENING);
@@ -68,7 +71,26 @@ const SpeechWithIA = () => {
             const audioBuffer = await audioContextRef.current.decodeAudioData(chunk);
             const source = audioContextRef.current.createBufferSource();
             source.buffer = audioBuffer;
-            source.connect(audioContextRef.current.destination);
+            
+            // Crear analizador para obtener el volumen
+            const analyser = audioContextRef.current.createAnalyser();
+            analyser.fftSize = 256;
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            
+            source.connect(analyser);
+            analyser.connect(audioContextRef.current.destination);
+            
+            // Actualizar volumen en tiempo real
+            const updateVolume = () => {
+                if (isPlayingRef.current) {
+                    analyser.getByteFrequencyData(dataArray);
+                    const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                    outputVolumeRef.current = Math.min(average / 128, 1); // Normalizar a 0-1
+                    requestAnimationFrame(updateVolume);
+                }
+            };
+            updateVolume();
+            
             source.onended = playNextChunk; // Encadenar el siguiente chunk al terminar
             source.start();
         } catch {
@@ -228,6 +250,7 @@ const SpeechWithIA = () => {
         setCallDuration(0);
         isMutedRef.current = false;
         warningShownRef.current = false;
+        outputVolumeRef.current = 0;
     }, []);
 
     // Limpiar si el componente se desmonta con la llamada activa
@@ -290,8 +313,23 @@ const SpeechWithIA = () => {
     // ── UI mínima ────────────────────────────────────────────────────────────
     const isInCall = callState !== CallState.IDLE;
     
-    // Encontrar la voz seleccionada para mostrar detalles
-    const selectedVoice = currentVoices.find(v => v.id === voiceId);
+    // Mapear CallState a AgentState para el Orb de ElevenLabs
+    const getAgentState = (): "thinking" | "listening" | "talking" | null => {
+        switch (callState) {
+            case CallState.IDLE:
+                return null;
+            case CallState.CONNECTING:
+                return "thinking";
+            case CallState.LISTENING:
+                return "listening";
+            case CallState.THINKING:
+                return "thinking";
+            case CallState.SPEAKING:
+                return "talking";
+            default:
+                return null;
+        }
+    };
 
     return (
         <div >
@@ -301,6 +339,72 @@ const SpeechWithIA = () => {
                 {error && (
                     <div className="mb-4 p-3 bg-red-900/50 border border-red-600 rounded text-red-200">
                         {error}
+                    </div>
+                )}
+
+                {/* Orbe de partículas 3D reactivo al estado */}
+                <div className={`${isInCall ? 'mb-8' : 'mb-6'} flex justify-center `}>
+                    <div className={`
+                        w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-96 lg:w-[500px] lg:h-[500px]
+                        rounded-full 
+                        bg-black/20
+                        shadow-[0_0_60px_rgba(0,0,0,0.4),inset_0_0_40px_rgba(0,0,0,0.6)]
+                        transition-all 
+                        duration-700
+                    `}>
+                        <Orb 
+                            agentState={getAgentState()}
+                            colors={
+                                callState === CallState.SPEAKING ? ["#10b981", "#34d399"] : // Verde
+                                callState === CallState.LISTENING ? ["#3b82f6", "#60a5fa"] : // Azul
+                                callState === CallState.THINKING || callState === CallState.CONNECTING ? ["#fbbf24", "#fcd34d"] : // Amarillo
+                                ["#4a5568", "#6b7280"] // Gris para IDLE
+                            }
+                            volumeMode="auto"
+                            outputVolumeRef={outputVolumeRef}
+                            className="w-full h-full"
+                            seed={21210703} // Seed fijo para animaciones consistentes
+                        />
+                        {/* <Orb state={callState} /> */}
+                    </div>
+                </div>
+
+                {/* Contenedor de controles durante la llamada - centrados */}
+                {isInCall && (
+                    <div className="flex flex-col items-center gap-4 mb-6">
+                        {/* Contador de tiempo */}
+                        <div className="flex items-center gap-2 bg-gray-800/50 px-6 py-3 rounded-full">
+                            <TimerIcon className="w-5 h-5 text-gray-400" />
+                            <span 
+                                className={`text-2xl font-mono font-bold ${
+                                    callDuration >= WARNING_TIME 
+                                        ? "text-red-400 animate-pulse" 
+                                        : callDuration >= 120 
+                                            ? "text-yellow-400" 
+                                            : "text-gray-300"
+                                }`}
+                            >
+                                {formatTime(callDuration)}
+                            </span>
+                            <span className="text-gray-500 text-sm">/ {formatTime(MAX_CALL_DURATION)}</span>
+                        </div>
+
+                        {/* Botón de colgar */}
+                        <button 
+                            onClick={endCall} 
+                            disabled={callState === CallState.CONNECTING}
+                            className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-3 px-8 rounded-full transition-colors duration-200 font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-red-600/50"
+                        >
+                            <PhoneOffIcon className="w-5 h-5" />
+                            Colgar
+                        </button>
+
+                        {/* Ayuda */}
+                        {callState === CallState.LISTENING && (
+                            <div className="text-center text-sm text-gray-400 mt-2">
+                                Habla en inglés y la IA te responderá
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -347,63 +451,7 @@ const SpeechWithIA = () => {
                             </div>
                         </div>
 
-                        {/* Info de voz seleccionada */}
-                        {selectedVoice && (
-                            <div className="text-sm text-gray-400 bg-gray-700/50 rounded p-3">
-                                <span className="font-medium">Voz seleccionada:</span> {selectedVoice.name} •{" "}
-                                <span className="capitalize">{selectedVoice.gender}</span> •{" "}
-                                Acento: {selectedVoice.accent}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Estado de la llamada */}
-                <div className="mb-4 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <span className="text-gray-400 font-medium">Estado:</span>
-                        <span 
-                            className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                                callState === CallState.SPEAKING ? "bg-green-600 text-white" :
-                                callState === CallState.LISTENING ? "bg-blue-600 text-white" :
-                                callState === CallState.THINKING ? "bg-yellow-600 text-white" :
-                                callState === CallState.CONNECTING ? "bg-purple-600 text-white" :
-                                "bg-gray-600 text-gray-300"
-                            }`}
-                        >
-                            {callState === CallState.IDLE && "Inactivo"}
-                            {callState === CallState.CONNECTING && "Conectando..."}
-                            {callState === CallState.LISTENING && "🎤 Escuchando"}
-                            {callState === CallState.THINKING && "🤔 Pensando..."}
-                            {callState === CallState.SPEAKING && "🔊 Hablando"}
-                        </span>
-                    </div>
-
-                    {/* Contador de tiempo (solo visible en llamada activa) */}
-                    {isInCall && (
-                        <div className="flex items-center gap-2">
-                            <span className="text-gray-400 text-sm"><TimerIcon/></span>
-                            <span 
-                                className={`text-lg font-mono font-semibold ${
-                                    callDuration >= WARNING_TIME 
-                                        ? "text-red-400 animate-pulse" 
-                                        : callDuration >= 120 
-                                            ? "text-yellow-400" 
-                                            : "text-gray-300"
-                                }`}
-                            >
-                                {formatTime(callDuration)}
-                            </span>
-                            <span className="text-gray-500 text-sm">/ {formatTime(MAX_CALL_DURATION)}</span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Transcripción en tiempo real */}
-                {transcript && (
-                    <div className="mb-4 p-4 bg-gray-700/50 rounded-lg border border-gray-600">
-                        <p className="text-sm text-gray-400 mb-1">Tú:</p>
-                        <p className="text-gray-200 italic">"{transcript}"</p>
+                       
                     </div>
                 )}
 
@@ -428,32 +476,24 @@ const SpeechWithIA = () => {
                     </div>
                 )}
 
-                {/* Botones de control */}
-                <div className="flex gap-3">
-                    {!isInCall ? (
+                {/* Botón de iniciar llamada (solo visible cuando NO hay llamada) */}
+                {!isInCall && (
+                    <div className="flex justify-center">
                         <button 
                             onClick={startCall}
-                            className=" bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded transition-colors duration-200 flex items-center justify-center gap-2"
+                            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-full transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-green-600/50"
                         >
-                            <PhoneCallIcon className="text-xl" />
+                            <PhoneCallIcon className="w-5 h-5" />
                             Iniciar llamada
                         </button>
-                    ) : (
-                        <button 
-                            onClick={endCall} 
-                            disabled={callState === CallState.CONNECTING}
-                            className=" bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-3 px-6 rounded transition-colors duration-200 font-semibold flex items-center justify-center gap-2"
-                        >
-                            <PhoneOffIcon className="text-xl" />
-                            Colgar
-                        </button>
-                    )}
-                </div>
+                    </div>
+                )}
 
-                {/* Ayuda */}
-                {isInCall && callState === CallState.LISTENING && (
-                    <div className="mt-4 text-center text-sm text-gray-400">
-                        Habla en inglés y la IA te responderá
+                                {/* Transcripción en tiempo real */}
+                {transcript && (
+                    <div className="mb-4 p-4 bg-gray-700/50 rounded-lg border border-gray-600">
+                        <p className="text-sm text-gray-400 mb-1">Tú:</p>
+                        <p className="text-gray-200 italic">"{transcript}"</p>
                     </div>
                 )}
             </div>
