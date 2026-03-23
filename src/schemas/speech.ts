@@ -25,7 +25,17 @@ export const ChatParamsSchema = z.object({
     sessionId: z.string().uuid("El sessionId debe ser un UUID válido"),
 });
 
+// Schema para flashcard generada
+export const GeneratedFlashcardSchema = z.object({
+    front: z.string(),
+    back: z.string(),
+    example: z.string(),
+});
+
+export const GeneratedFlashcardsResponseSchema = z.array(GeneratedFlashcardSchema);
+
 // Type exports
 export type ScribeTokenResponse = z.infer<typeof ScribeTokenResponseSchema>;
 export type ClearSessionResponse = z.infer<typeof ClearSessionResponseSchema>;
 export type ChatParams = z.infer<typeof ChatParamsSchema>;
+export type GeneratedFlashcard = z.infer<typeof GeneratedFlashcardSchema>;

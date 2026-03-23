@@ -3,7 +3,9 @@ import {
     ChatParamsSchema, 
     ScribeTokenResponseSchema, 
     ClearSessionResponseSchema,
-    type ChatParams 
+    GeneratedFlashcardsResponseSchema,
+    type ChatParams,
+    type GeneratedFlashcard
 } from "../schemas/speech";
 
 /**
@@ -46,6 +48,22 @@ export const clearChatSession = async (sessionId: string) => {
     
     // Validar respuesta
     const validated = ClearSessionResponseSchema.parse(response.data);
+    return validated;
+};
+
+/**
+ * Genera flashcards sugeridas del historial de conversación
+ * @throws {Error} Si hay error en la petición o validación falla
+ */
+export const generateFlashcardsFromSession = async (sessionId: string): Promise<GeneratedFlashcard[]> => {
+    if (!sessionId || typeof sessionId !== 'string') {
+        throw new Error("sessionId debe ser un string válido");
+    }
+    
+    const response = await api.get(`/speech/session/${sessionId}/flashcards`);
+    
+    // Validar respuesta
+    const validated = GeneratedFlashcardsResponseSchema.parse(response.data);
     return validated;
 };
 

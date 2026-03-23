@@ -1,10 +1,12 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Scribe, RealtimeEvents, RealtimeConnection, CommitStrategy } from "@elevenlabs/client";
-import { chatWithSpeech, getScribeToken, clearChatSession } from "../../services/speech";
+import { chatWithSpeech, getScribeToken, clearChatSession, generateFlashcardsFromSession } from "../../services/speech";
 import { englishVoices, spanishVoices } from "../../schemas/categories";
 import { PhoneCallIcon, PhoneOffIcon, SpeechIcon, TimerIcon } from "lucide-react";
 import { Orb } from "../elevelabs/Orb";
+import SuggestedFlashcards from "./SuggestedFlashcards";
+import { GeneratedFlashcard } from "../../schemas/speech";
 
 // Estados posibles de la llamada
 const CallState = {
@@ -28,6 +30,8 @@ const SpeechWithIA = () => {
     const [idiom, setIdiom] = useState<"English" | "Spanish">("English");
     const [voiceId, setVoiceId] = useState(RACHEL_VOICE_ID);
     const [callDuration, setCallDuration] = useState(0); // Tiempo en segundos
+    const [suggestedFlashcards, setSuggestedFlashcards] = useState<GeneratedFlashcard[]>([]);
+    const [showFlashcards, setShowFlashcards] = useState(false);
 
     // Refs para no recrear en cada render
     const scribeRef = useRef<RealtimeConnection | null>(null);        // Conexión STT de ElevenLabs
@@ -235,6 +239,19 @@ const SpeechWithIA = () => {
         audioContextRef.current?.close();
         audioContextRef.current = null;
 
+        // Generar flashcards del historial antes de limpiar
+        if (sessionIdRef.current && callDuration >= 30) { // Solo si la llamada duró al menos 30 segundos
+            try {
+                const flashcards = await generateFlashcardsFromSession(sessionIdRef.current);
+                if (flashcards.length > 0) {
+                    setSuggestedFlashcards(flashcards);
+                    setShowFlashcards(true);
+                }
+            } catch (err) {
+                console.warn("[endCall] No se pudieron generar flashcards:", err);
+            }
+        }
+
         // Limpiar sesión en el backend (validado con Zod)
         if (sessionIdRef.current) {
             try {
@@ -251,7 +268,7 @@ const SpeechWithIA = () => {
         isMutedRef.current = false;
         warningShownRef.current = false;
         outputVolumeRef.current = 0;
-    }, []);
+    }, [callDuration]);
 
     // Limpiar si el componente se desmonta con la llamada activa
     useEffect(() => {
@@ -497,6 +514,21 @@ const SpeechWithIA = () => {
                     </div>
                 )}
             </div>
+
+            {/* Modal de flashcards sugeridas */}
+            {showFlashcards && (
+                <SuggestedFlashcards
+                    flashcards={suggestedFlashcards}
+                    onClose={() => {
+                        setShowFlashcards(false);
+                        setSuggestedFlashcards([]);
+                    }}
+                    onSave={() => {
+                        setShowFlashcards(false);
+                        setSuggestedFlashcards([]);
+                    }}
+                />
+            )}
         </div>
     );
  
