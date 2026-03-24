@@ -29,7 +29,6 @@ export function ProtectedLayout() {
                         navigate("/plans");
                         return;
                     }
-                    console.log(activeSubscriptions);
                     setSubscriptions(activeSubscriptions);
                 } else {
                     navigate("/plans");
@@ -58,7 +57,7 @@ export function ProtectedLayout() {
     if (!data) return <Navigate to="/login" replace />;
 
     return (
-        <div className="bg-neutral-950 text-white min-h-screen">
+        <div className="bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 text-white text-white min-h-screen">
             <Toaster 
                 position="top-right"
             />

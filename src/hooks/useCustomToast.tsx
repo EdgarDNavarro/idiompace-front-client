@@ -1,5 +1,4 @@
 import toast from "react-hot-toast";
-import { Flame } from "lucide-react";
 
 export const useCustomToast = () => {
     const showStreakToast = () => {
@@ -13,11 +12,12 @@ export const useCustomToast = () => {
                     <div className="flex items-start">
                         {/* Ícono animado */}
                         <div className="relative flex-shrink-0 pt-0.5">
-                            <div className="absolute inset-0 bg-red-600 animate-pulse rounded-full blur-xl" />
-                            <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-yellow-300 text-red-700 bg-gradient-to-br shadow-lg">
-                                <Flame
-                                    className="h-8 w-8"
-                                    fill="currentColor"
+                            <div className="absolute inset-0 bg-orange-600 animate-pulse rounded-full blur-xl" />
+                            <div className="relative flex h-10 w-10 items-center justify-center rounded-full  shadow-lg">
+                                <img
+                                    src="/assets/Fuego.png"
+                                    alt="Flame"
+                                    className={`h-8 w-8 animate-pulse`}
                                 />
                             </div>
                         </div>

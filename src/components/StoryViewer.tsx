@@ -121,29 +121,33 @@ export const StoryViewer = () => {
                 />
 
                 {/* Lyrics-like phrases */}
-                <div className="w-full max-w-6xl relative ">
+                <div className="w-full max-w-7xl mx-auto relative">
 
-                    {/* Header */}
-                    <div className="w-full flex items-center justify-between py-4 px-6 sticky top-6 z-10 backdrop-blur-sm rounded-md md:backdrop-blur-0">
-                        <button
-                            onClick={() => navigate("/")}
-                            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                            Back
-                        </button>
+                    {/* Header - Moderno Glassmorphism */}
+                    <div className="w-full flex items-center justify-between py-3 px-4 md:px-6 sticky top-4 z-10 mb-4">
+                        <div className="flex items-center gap-3 w-full">
+                            <button
+                                onClick={() => navigate("/")}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-900/80 backdrop-blur-xl border border-neutral-700/50 text-gray-300 hover:text-white hover:border-neutral-600 transition-all duration-200 hover:scale-105 active:scale-95"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                <span className="text-sm font-medium">Back</span>
+                            </button>
 
-                        <button
-                            onClick={handleShowTranslations}
-                            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
-                        >
-                            {showTranslations ? (
-                                <Eye className="w-4 h-4" />
-                            ) : (
-                                <EyeOff className="w-4 h-4" />
-                            )}
-                            {showTranslations ? "Hide" : "Show"} Translations
-                        </button>
+                            <div className="flex-1"></div>
+
+                            <button
+                                onClick={handleShowTranslations}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-900/80 backdrop-blur-xl border border-neutral-700/50 text-gray-300 hover:text-white hover:border-blue-500/50 transition-all duration-200 hover:scale-105 active:scale-95"
+                            >
+                                {showTranslations ? (
+                                    <Eye className="w-4 h-4 text-blue-400" />
+                                ) : (
+                                    <EyeOff className="w-4 h-4 text-gray-400" />
+                                )}
+                                <span className="text-sm font-medium">{showTranslations ? "Hide" : "Show"}</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex flex-col items-center gap-6 py-12 transition-all duration-500">

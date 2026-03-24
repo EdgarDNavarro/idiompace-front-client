@@ -2,8 +2,6 @@ import { Search, Play } from "lucide-react";
 import { PaginationMeta, Story } from "../schemas";
 import { useEffect, useState } from "react";
 import { getStories } from "../services/stories";
-import ViewDailyPhrase from "./daily/ViewDailyPhrase";
-import DailyGrid from "./daily/DailyGrid";
 import { StreakCounter } from "./streak/StreakCounter";
 import { createStreak, getStreaks } from "../services/streaks";
 import { isAxiosError } from "axios";
@@ -193,10 +191,6 @@ export const StoryList = () => {
                 meta={meta}
                 onPageChange={getFromApiStories}
             />
-
-            <ViewDailyPhrase />
-
-            <DailyGrid />
         </div>
     );
 };
