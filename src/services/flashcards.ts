@@ -97,6 +97,30 @@ export const markFlashcardWrong = async (id: number) => {
     return response.data;
 };
 
+// Generar flashcards desde un PDF
+export const generateFlashcardsFromPdf = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post("/upload/pdf", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return response.data as { data: { front: string; back: string; example: string }[]; pages: number };
+};
+
+// Generar flashcards desde una imagen
+export const generateFlashcardsFromImage = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post("/upload/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return response.data as { data: { front: string; back: string; example: string }[] };
+};
+
 // Subir CSV para crear flashcards masivamente
 export const uploadFlashcardsCsv = async (file: File, deckId: number, delimiter: string = ",") => {
     const formData = new FormData();
