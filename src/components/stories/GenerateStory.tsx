@@ -1,10 +1,7 @@
-import { Subscription } from "@better-auth/stripe";
-import { authClient } from "../../lib/auth-client";
-import { Spinner } from "../loaders/Spinner";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { addOneUsage, generateStoryWithIA, getStoryByVoice, getUsageByUserId } from "../../services/stories";
-import { Brain, Play, Globe, Users, Zap, ArrowRight, Crown, CheckCircle, AlertTriangle, Info } from "lucide-react";
+import { generateStoryWithIA, getStoryByVoice } from "../../services/stories";
+import { Brain, Play, Globe, Users, Zap, ArrowRight, CheckCircle, Info } from "lucide-react";
 import toast from "react-hot-toast";
 import { ExampleAudioPlayer } from "./ExampleAudioPlayer";
 import { isAxiosError } from "axios";
@@ -39,17 +36,12 @@ const LEVELS = [
 const GenerateStory = () => {
     const navigate = useNavigate();
 
-    const [loading, setLoading] = useState(true);
-    const [usageId, setUsageId] = useState<number | null>(null);
     const [selectedExampleVoice, setSelectedExampleVoice] = useState<ExampleVoice>({
         title: "",
         level: ""
     });
     const [cachedExampleVoice, setCachedExampleVoice] = useState<CachedExampleVoice[]>([])
     const [generating, setGenerating] = useState(false);
-    const [subscriptions, setSubscriptions] = useState<Subscription | undefined>(undefined);
-    const [storiesGenerated, setStoriesGenerated] = useState(0);
-    const { data, isPending } = authClient.useSession();
 
     const [formData, setFormData] = useState<FormData>({
         idiom: "English",
@@ -115,65 +107,6 @@ const GenerateStory = () => {
         }
     }
 
-    // Get stories counter from localStorage
-    const getStoriesCount = async () => {
-
-        try {
-            const usage = await getUsageByUserId(data?.user.id || "");
-            if(usage.data) {
-                setStoriesGenerated(usage.data.storiesUsed || 0);
-                setUsageId(usage.data.id);
-            }
-            
-            
-        } catch (error) {
-            console.log("Error getting stories count:", error);
-        }
-    };
-
-    useEffect(() => {
-        const listSubscriptions = async () => {
-            setLoading(true);
-            try {
-                const subscriptionData = await authClient.subscription.list({
-                    query: {
-                        referenceId: data?.user.id || "",
-                    }
-                });
-    
-                if(!subscriptionData.error && subscriptionData.data && subscriptionData.data.length > 0) {
-                    const activeSubscriptions = subscriptionData.data.find(sub => sub.status === "active");
-                    if(!activeSubscriptions) {
-                        navigate("/plans");
-                        return;
-                    }
-                    setSubscriptions(activeSubscriptions);
-                } else {
-                    navigate("/plans");
-                }
-            } catch (error) {
-                console.log(error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        if(data) {
-            listSubscriptions();
-            getStoriesCount()
-        } else {
-            setLoading(false);
-        }
-    }, [data, navigate]);
-
-    if (isPending || loading) return (
-        <div className="bg-neutral-950 text-white min-h-screen flex items-center justify-center">
-            <Spinner/>
-        </div>
-    );
-
-    const storiesLimit = (subscriptions as any)?.limits?.stories || 0;
-    const canGenerateMore = storiesLimit === 0 ? false : storiesGenerated < storiesLimit;
     const currentVoices = formData.idiom === "English" ? englishVoices : spanishVoices;
     const currentCategories = formData.idiom === "English" ? CATEGORIES_ENGLISH : CATEGORIES_SPANISH;
 
@@ -196,11 +129,6 @@ const GenerateStory = () => {
     };
 
     const createStory = async () => {
-        if (!canGenerateMore) {
-            toast.error("You've reached your monthly story limit. Upgrade your plan to generate more stories!");
-            return;
-        }
-
         if (!formData.voice_id || formData.categories.length === 0) {
             toast.error("Please select a voice and at least one category.");
             return;
@@ -216,12 +144,8 @@ const GenerateStory = () => {
                 level: formData.level,
             });
 
-            if (result && usageId) {
-                
+            if (result) {
                 toast.success("Story generation started! You'll be notified when it's ready (~3 minutes)");
-                await addOneUsage(usageId)
-                setStoriesGenerated(prev => prev + 1);
-                // Optionally redirect or reset form
                 setFormData(prev => ({
                     ...prev,
                     categories: [],
@@ -229,16 +153,16 @@ const GenerateStory = () => {
                     voice_name: ""
                 }));
             }
-        } catch (error) {
+        } catch (error: any) {
+            if (error?.response?.status === 429) {
+                toast.error("Story limit reached. Try again in an hour.");
+            } else {
+                toast.error("Failed to generate story. Please try again.");
+            }
             console.error(error);
-            toast.error("Failed to generate story. Please try again.");
         } finally {
             setGenerating(false);
         }
-    };
-
-    const handleUpgrade = () => {
-        navigate("/plans");
     };
 
     return (
@@ -254,77 +178,6 @@ const GenerateStory = () => {
                     </div>
                     <p className="text-gray-400 text-sm md:text-base">Create personalized learning stories powered by AI</p>
                 </div>
-
-                {/* Usage Stats - Compacto */}
-                <div className="relative group mb-6">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-300"></div>
-                    <div className="relative bg-neutral-900/90 backdrop-blur-xl rounded-2xl p-4 md:p-5 border border-neutral-700/50">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex-1">
-                                <h3 className="text-xs font-medium text-gray-400 mb-2">Monthly Usage</h3>
-                                <div className="flex items-baseline gap-2 mb-3">
-                                    <span className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-green-400 to-green-600 bg-clip-text text-transparent">
-                                        {storiesGenerated}
-                                    </span>
-                                    <span className="text-xl text-gray-500">/</span>
-                                    <span className="text-2xl md:text-3xl font-semibold text-blue-400">
-                                        {storiesLimit === 0 ? "0" : storiesLimit}
-                                    </span>
-                                    <span className="text-gray-500 text-sm ml-1">stories</span>
-                                </div>
-                                
-                                {/* Progress Bar - Enhanced */}
-                                {storiesLimit > 0 && (
-                                    <div className="space-y-1.5">
-                                        <div className="relative w-full h-2 bg-neutral-800 rounded-full overflow-hidden">
-                                            <div 
-                                                className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 via-green-400 to-blue-500 rounded-full transition-all duration-500 ease-out shadow-lg shadow-green-500/50"
-                                                style={{ width: `${Math.min((storiesGenerated / storiesLimit) * 100, 100)}%` }}
-                                            >
-                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between text-xs text-gray-500">
-                                            <span>{Math.round((storiesGenerated / storiesLimit) * 100)}% used</span>
-                                            <span>{storiesLimit - storiesGenerated} remaining</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            {!canGenerateMore && (
-                                <button
-                                    onClick={handleUpgrade}
-                                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 whitespace-nowrap"
-                                >
-                                    <Crown className="w-4 h-4" />
-                                    Upgrade Plan
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Limit Warning - Enhanced */}
-                {!canGenerateMore && (
-                    <div className="relative mb-6 overflow-hidden rounded-xl border border-yellow-500/30 bg-gradient-to-br from-yellow-900/20 via-orange-900/10 to-yellow-900/20 backdrop-blur-sm">
-                        <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 to-orange-500/5"></div>
-                        <div className="relative flex items-start gap-3 p-4">
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                                <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-yellow-300 font-semibold text-sm mb-0.5">Story limit reached</p>
-                                <p className="text-yellow-200/80 text-sm leading-relaxed">
-                                    {storiesLimit === 0 
-                                        ? "Your current plan doesn't include AI story generation." 
-                                        : "You've used all your monthly AI stories."
-                                    } Upgrade to continue creating amazing content.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 <form className="space-y-5">
                     {/* Language + Level Grid en Desktop */}
@@ -509,30 +362,19 @@ const GenerateStory = () => {
                         <button
                             type="button"
                             onClick={createStory}
-                            disabled={!canGenerateMore || generating || !formData.voice_id || formData.categories.length === 0}
+                            disabled={generating || !formData.voice_id || formData.categories.length === 0}
                             className={`relative w-full py-4 md:py-5 px-6 md:px-8 rounded-xl font-bold text-base md:text-lg transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden group ${
-                                !canGenerateMore
-                                    ? 'bg-neutral-800 cursor-not-allowed text-gray-500 border-2 border-neutral-700'
-                                    : generating
-                                        ? 'bg-gradient-to-r from-green-600 to-blue-600 cursor-wait shadow-lg shadow-green-500/50'
-                                        : 'bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 hover:from-green-500 hover:via-blue-500 hover:to-purple-500 text-white shadow-2xl shadow-green-500/40 hover:shadow-green-500/60 hover:scale-[1.02] active:scale-[0.98]'
+                                generating
+                                    ? 'bg-gradient-to-r from-green-600 to-blue-600 cursor-wait shadow-lg shadow-green-500/50'
+                                    : 'bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 hover:from-green-500 hover:via-blue-500 hover:to-purple-500 text-white shadow-2xl shadow-green-500/40 hover:shadow-green-500/60 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
                             }`}
                         >
-                            {/* Animated background gradient */}
-                            {!generating && canGenerateMore && (
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                            )}
-                            
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                             <div className="relative flex items-center justify-center gap-2.5">
                                 {generating ? (
                                     <>
                                         <div className="animate-spin rounded-full h-5 w-5 border-3 border-white border-t-transparent"></div>
                                         <span>Generating Story...</span>
-                                    </>
-                                ) : !canGenerateMore ? (
-                                    <>
-                                        <Crown className="w-5 h-5" />
-                                        <span>Upgrade to Generate Stories</span>
                                     </>
                                 ) : (
                                     <>
@@ -543,15 +385,13 @@ const GenerateStory = () => {
                                 )}
                             </div>
                         </button>
-                        
-                        {canGenerateMore && (
-                            <div className="mt-4 text-center">
-                                <p className="text-gray-400 text-sm leading-relaxed flex items-center justify-center gap-2">
-                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                                    Story generation takes approximately 3 minutes. You'll be notified when ready.
-                                </p>
-                            </div>
-                        )}
+
+                        <div className="mt-4 text-center">
+                            <p className="text-gray-400 text-sm leading-relaxed flex items-center justify-center gap-2">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                Story generation takes approximately 3 minutes. You'll be notified when ready.
+                            </p>
+                        </div>
                     </div>
                 </form>
 

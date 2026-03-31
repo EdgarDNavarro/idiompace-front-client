@@ -1,7 +1,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Scribe, RealtimeEvents, RealtimeConnection, CommitStrategy } from "@elevenlabs/client";
-import { chatWithSpeech, getScribeToken, clearChatSession, generateFlashcardsFromSession } from "../../services/speech";
+import { chatWithSpeech, clearChatSession, generateFlashcardsFromSession, startSpeechSession, endSpeechSession, getSpeechQuota, SpeechQuota } from "../../services/speech";
 import { englishVoices, spanishVoices } from "../../schemas/categories";
 import { PhoneCallIcon, PhoneOffIcon, SpeechIcon, TimerIcon } from "lucide-react";
 import { Orb } from "../elevelabs/Orb";
@@ -10,49 +10,51 @@ import { GeneratedFlashcard } from "../../schemas/speech";
 
 // Estados posibles de la llamada
 const CallState = {
-    IDLE: "idle",           // Sin llamada activa
-    CONNECTING: "connecting", // Pidiendo token y conectando STT
-    LISTENING: "listening", // Micrófono activo, esperando al usuario
-    THINKING: "thinking",  // Transcripción enviada, esperando respuesta
-    SPEAKING: "speaking",  // Reproduciendo audio de la IA
+    IDLE: "idle",
+    CONNECTING: "connecting",
+    LISTENING: "listening",
+    THINKING: "thinking",
+    SPEAKING: "speaking",
 } as const;
 
 type CallStateType = typeof CallState[keyof typeof CallState];
 
-const RACHEL_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel - inglés nativo (default)
-const MAX_CALL_DURATION = 180; // 3 minutos en segundos
-const WARNING_TIME = 170; // 2:50 - faltando 10 segundos
+const RACHEL_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
 
 const SpeechWithIA = () => {
     const [callState, setCallState] = useState<CallStateType>(CallState.IDLE);
-    const [transcript, setTranscript] = useState(""); // Texto parcial en tiempo real
+    const [transcript, setTranscript] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [idiom, setIdiom] = useState<"English" | "Spanish">("English");
     const [voiceId, setVoiceId] = useState(RACHEL_VOICE_ID);
-    const [callDuration, setCallDuration] = useState(0); // Tiempo en segundos
+    const [callDuration, setCallDuration] = useState(0);
+    const [maxCallDuration, setMaxCallDuration] = useState(180); // se ajusta con la cuota
     const [suggestedFlashcards, setSuggestedFlashcards] = useState<GeneratedFlashcard[]>([]);
     const [showFlashcards, setShowFlashcards] = useState(false);
+    const [quota, setQuota] = useState<SpeechQuota | null>(null);
 
-    // Refs para no recrear en cada render
-    const scribeRef = useRef<RealtimeConnection | null>(null);        // Conexión STT de ElevenLabs
-    const sessionIdRef = useRef<string | null>(null);     // ID único de sesión
-    const audioContextRef = useRef<AudioContext | null>(null);  // AudioContext para reproducir audio
-    const audioQueueRef = useRef<ArrayBuffer[]>([]);      // Cola de chunks de audio pendientes
-    const isPlayingRef = useRef(false);    // Si hay audio reproduciéndose ahora mismo
-    const isMutedRef = useRef(false);      // Para silenciar micro mientras habla la IA
-    const warningShownRef = useRef(false); // Para evitar múltiples warnings
+    const scribeRef = useRef<RealtimeConnection | null>(null);
+    const sessionIdRef = useRef<string | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const audioQueueRef = useRef<ArrayBuffer[]>([]);
+    const isPlayingRef = useRef(false);
+    const isMutedRef = useRef(false);
+    const warningShownRef = useRef(false);
     const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const outputVolumeRef = useRef(0);     // Volumen de salida para el orbe (0-1)
+    const outputVolumeRef = useRef(0);
 
-    // Obtener las voces según el idioma seleccionado
     const currentVoices = idiom === "English" ? englishVoices : spanishVoices;
 
-    // Formatear tiempo como MM:SS
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
+
+    // Cargar cuota al montar
+    useEffect(() => {
+        getSpeechQuota().then(setQuota).catch(console.warn);
+    }, []);
 
 
     const playNextChunk = useCallback(async () => {
@@ -158,11 +160,19 @@ const SpeechWithIA = () => {
             // 1. Crear AudioContext (debe crearse tras un gesto del usuario)
             audioContextRef.current = new AudioContext();
 
-            // 2. Generar sessionId único para esta llamada
-            sessionIdRef.current = crypto.randomUUID();
+            // 2. Registrar sesión en el backend: verifica cuota y obtiene token
+            const session = await startSpeechSession();
+            sessionIdRef.current = session.sessionId;
+            setMaxCallDuration(session.allowedSeconds);
 
-            // 3. Pedir token STT al backend (validado con Zod)
-            const token = await getScribeToken();
+            // Actualizar cuota local tras iniciar
+            setQuota(prev => prev
+                ? { ...prev, minutesRemaining: session.minutesRemaining, canCall: session.minutesRemaining > 0 }
+                : null
+            );
+
+            // 3. Conectar Scribe con el token del servidor
+            const token = session.token;
 
             // 4. Conectar Scribe (STT de ElevenLabs) con el micrófono
             const connection = Scribe.connect({
@@ -223,24 +233,21 @@ const SpeechWithIA = () => {
 
     // ── Terminar llamada ─────────────────────────────────────────────────────
     const endCall = useCallback(async () => {
-        // Limpiar timer
         if (timerIntervalRef.current) {
             clearInterval(timerIntervalRef.current);
             timerIntervalRef.current = null;
         }
-        
-        // Cerrar STT
+
         scribeRef.current?.close();
         scribeRef.current = null;
 
-        // Parar audio
         audioQueueRef.current = [];
         isPlayingRef.current = false;
         audioContextRef.current?.close();
         audioContextRef.current = null;
 
-        // Generar flashcards del historial antes de limpiar
-        if (sessionIdRef.current && callDuration >= 30) { // Solo si la llamada duró al menos 30 segundos
+        // Generar flashcards si la llamada duró al menos 30 segundos
+        if (sessionIdRef.current && callDuration >= 30) {
             try {
                 const flashcards = await generateFlashcardsFromSession(sessionIdRef.current);
                 if (flashcards.length > 0) {
@@ -252,19 +259,25 @@ const SpeechWithIA = () => {
             }
         }
 
-        // Limpiar sesión en el backend (validado con Zod)
+        // Registrar duración consumida y limpiar sesión en el backend
         if (sessionIdRef.current) {
             try {
-                await clearChatSession(sessionIdRef.current);
+                await endSpeechSession(sessionIdRef.current, callDuration);
             } catch (err) {
-                console.warn("[endCall] No se pudo limpiar la sesión:", err);
+                // Si falla, intentar limpiar con el endpoint anterior como fallback
+                try { await clearChatSession(sessionIdRef.current); } catch {}
+                console.warn("[endCall] No se pudo registrar duración:", err);
             }
             sessionIdRef.current = null;
         }
 
+        // Refrescar cuota tras la llamada
+        getSpeechQuota().then(setQuota).catch(console.warn);
+
         setTranscript("");
         setCallState(CallState.IDLE);
         setCallDuration(0);
+        setMaxCallDuration(180);
         isMutedRef.current = false;
         warningShownRef.current = false;
         outputVolumeRef.current = 0;
@@ -290,21 +303,22 @@ const SpeechWithIA = () => {
                 setCallDuration(prev => {
                     const newDuration = prev + 1;
 
-                    // A los 170 segundos (2:50), enviar mensaje de despedida
-                    if (newDuration === WARNING_TIME && !warningShownRef.current) {
+                    // A los (maxCallDuration - 10) segundos, enviar mensaje de despedida
+                    const warningTime = maxCallDuration - 10;
+                    if (newDuration === warningTime && !warningShownRef.current) {
                         warningShownRef.current = true;
-                        const farewellMessage = idiom === "English" 
+                        const farewellMessage = idiom === "English"
                             ? "Our time is almost up. Please say goodbye."
                             : "Nuestro tiempo casi se acaba. Por favor despídete.";
-                        
+
                         // Enviar mensaje automático
                         sendTranscript(farewellMessage);
                     }
 
-                    // A los 180 segundos (3:00), terminar llamada
-                    if (newDuration >= MAX_CALL_DURATION) {
+                    // Al llegar al límite, terminar llamada
+                    if (newDuration >= maxCallDuration) {
                         endCall();
-                        return MAX_CALL_DURATION;
+                        return maxCallDuration;
                     }
 
                     return newDuration;
@@ -392,18 +406,18 @@ const SpeechWithIA = () => {
                         {/* Contador de tiempo */}
                         <div className="flex items-center gap-2 bg-gray-800/50 px-6 py-3 rounded-full">
                             <TimerIcon className="w-5 h-5 text-gray-400" />
-                            <span 
+                            <span
                                 className={`text-2xl font-mono font-bold ${
-                                    callDuration >= WARNING_TIME 
-                                        ? "text-red-400 animate-pulse" 
-                                        : callDuration >= 120 
-                                            ? "text-yellow-400" 
+                                    callDuration >= maxCallDuration - 10
+                                        ? "text-red-400 animate-pulse"
+                                        : callDuration >= 120
+                                            ? "text-yellow-400"
                                             : "text-gray-300"
                                 }`}
                             >
                                 {formatTime(callDuration)}
                             </span>
-                            <span className="text-gray-500 text-sm">/ {formatTime(MAX_CALL_DURATION)}</span>
+                            <span className="text-gray-500 text-sm">/ {formatTime(maxCallDuration)}</span>
                         </div>
 
                         {/* Botón de colgar */}
@@ -473,20 +487,20 @@ const SpeechWithIA = () => {
                 )}
 
                 {/* Banner de advertencia de tiempo */}
-                {isInCall && callDuration >= WARNING_TIME && (
+                {isInCall && callDuration >= maxCallDuration - 10 && (
                     <div className="mb-4 p-4 bg-red-900/30 border-2 border-red-500 rounded-lg animate-pulse">
                         <div className="flex items-center gap-3">
                             <span className="text-3xl">⚠️</span>
                             <div>
                                 <p className="text-red-300 font-bold text-lg">
-                                    {idiom === "English" 
-                                        ? "Time is running out!" 
+                                    {idiom === "English"
+                                        ? "Time is running out!"
                                         : "¡El tiempo se está agotando!"}
                                 </p>
                                 <p className="text-red-400 text-sm">
                                     {idiom === "English"
-                                        ? `The call will end in ${MAX_CALL_DURATION - callDuration} seconds`
-                                        : `La llamada terminará en ${MAX_CALL_DURATION - callDuration} segundos`}
+                                        ? `The call will end in ${maxCallDuration - callDuration} seconds`
+                                        : `La llamada terminará en ${maxCallDuration - callDuration} segundos`}
                                 </p>
                             </div>
                         </div>
@@ -495,10 +509,35 @@ const SpeechWithIA = () => {
 
                 {/* Botón de iniciar llamada (solo visible cuando NO hay llamada) */}
                 {!isInCall && (
-                    <div className="flex justify-center">
-                        <button 
+                    <div className="flex flex-col items-center gap-3">
+                        {/* Barra de cuota diaria */}
+                        {quota && (
+                            <div className="w-full max-w-xs">
+                                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                    <span>Cuota diaria</span>
+                                    <span>{quota.minutesRemaining.toFixed(1)} / {quota.maxMinutes} min restantes</span>
+                                </div>
+                                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-500 ${
+                                            quota.minutesRemaining <= 1 ? "bg-red-500" :
+                                            quota.minutesRemaining <= 2 ? "bg-yellow-500" : "bg-green-500"
+                                        }`}
+                                        style={{ width: `${(quota.minutesRemaining / quota.maxMinutes) * 100}%` }}
+                                    />
+                                </div>
+                                {!quota.canCall && (
+                                    <p className="text-red-400 text-xs text-center mt-1">
+                                        Has alcanzado el límite diario. Vuelve mañana.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        <button
                             onClick={startCall}
-                            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-full transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-green-600/50"
+                            disabled={!quota?.canCall}
+                            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-full transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-green-600/50 disabled:shadow-none"
                         >
                             <PhoneCallIcon className="w-5 h-5" />
                             Iniciar llamada

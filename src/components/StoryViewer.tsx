@@ -7,7 +7,7 @@ import { getStoryById } from "../services/stories";
 import ListVocabularies from "./stories/ListVocabularies";
 import TryExercises from "./stories/TryExercises";
 import CreateFlashcardModal from "./flashcards/CreateFlashcard";
-import { getStreaks, updateStreak } from "../services/streaks";
+import { incrementStreak } from "../services/streaks";
 import { useCustomToast } from "../hooks/useCustomToast";
 
 export const StoryViewer = () => {
@@ -42,22 +42,12 @@ export const StoryViewer = () => {
 
     const verifyUpdateStreak = async () => {
         try {
-            const streak = await getStreaks()
-            if(!streak.updatedAt) return
-            const updatedAt = new Date(streak.updatedAt);
-            const today = new Date();
-
-            const wasUpdatedToday =
-            updatedAt.getFullYear() === today.getFullYear() &&
-            updatedAt.getMonth() === today.getMonth() &&
-            updatedAt.getDate() === today.getDate();
-
-            if(!wasUpdatedToday) {
-                await updateStreak(streak.currentStreak + 1, Math.max(streak.longestStreak, streak.currentStreak + 1))
+            const result = await incrementStreak();
+            if (result.incremented) {
                 showStreakToast();
             }
         } catch (error) {
-            
+            console.log(error);
         }
     }
 

@@ -1,12 +1,43 @@
 import api from "../conf/axios";
-import { 
-    ChatParamsSchema, 
-    ScribeTokenResponseSchema, 
+import {
+    ChatParamsSchema,
     ClearSessionResponseSchema,
     GeneratedFlashcardsResponseSchema,
     type ChatParams,
     type GeneratedFlashcard
 } from "../schemas/speech";
+
+export interface SpeechQuota {
+    minutesUsed: number;
+    minutesRemaining: number;
+    maxMinutes: number;
+    canCall: boolean;
+}
+
+export interface SpeechSessionStart {
+    sessionId: string;
+    token: string;
+    allowedSeconds: number;
+    minutesRemaining: number;
+    maxMinutes: number;
+}
+
+// Inicia una sesión de llamada: verifica cuota y obtiene el token de Scribe
+export const startSpeechSession = async (): Promise<SpeechSessionStart> => {
+    const response = await api.post("/speech/session/start");
+    return response.data;
+};
+
+// Finaliza una sesión: registra la duración real consumida para actualizar cuota
+export const endSpeechSession = async (sessionId: string, durationSeconds: number): Promise<void> => {
+    await api.post("/speech/session/end", { sessionId, durationSeconds });
+};
+
+// Consulta la cuota diaria del usuario
+export const getSpeechQuota = async (): Promise<SpeechQuota> => {
+    const response = await api.get("/speech/quota");
+    return response.data;
+};
 
 /**
  * Realiza una conversación con la IA y retorna el stream de audio

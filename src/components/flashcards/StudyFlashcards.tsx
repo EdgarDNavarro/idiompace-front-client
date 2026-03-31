@@ -8,7 +8,7 @@ import {
 import { Flashcard } from "../../schemas";
 import { Loader2, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { getStreaks, updateStreak } from "../../services/streaks";
+import { incrementStreak } from "../../services/streaks";
 import { useCustomToast } from "../../hooks/useCustomToast";
 
 const StudyFlashcards: React.FC = () => {
@@ -69,22 +69,13 @@ const StudyFlashcards: React.FC = () => {
             } else {
                 setFinished(true);
 
-                //Aumentar racha diaria si no se ha hecho ya hoy
-
-                const streak = await getStreaks()
-                if(!streak.updatedAt) return
-                const updatedAt = new Date(streak.updatedAt);
-                const today = new Date();
-
-                const wasUpdatedToday =
-                updatedAt.getFullYear() === today.getFullYear() &&
-                updatedAt.getMonth() === today.getMonth() &&
-                updatedAt.getDate() === today.getDate();
-
-                if(!wasUpdatedToday) {
-                    console.log("Actualizar racha", streak);
-                    await updateStreak(streak.currentStreak + 1, Math.max(streak.longestStreak, streak.currentStreak + 1))
-                    showStreakToast()
+                try {
+                    const result = await incrementStreak();
+                    if (result.incremented) {
+                        showStreakToast();
+                    }
+                } catch (e) {
+                    console.log(e);
                 }
                 
             }

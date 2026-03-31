@@ -1,7 +1,6 @@
-
 import api from "../conf/axios";
 import { StreakSchema } from "../schemas";
-
+import { Streak } from "../schemas";
 
 export const getStreaks = async () => {
     const response = await api.get("/streaks");
@@ -23,10 +22,15 @@ export const createStreak = async () => {
 
 export const updateStreak = async (currentStreak: number, longestStreak: number) => {
     const response = await api.put(`/streaks`, { currentStreak, longestStreak });
-    console.log(response);
     const parsed = StreakSchema.safeParse(response.data.data);
     if (!parsed.success) {
         throw new Error("Invalid streak schema");
     }
     return parsed.data;
+};
+
+// Incrementa la racha del día si aún no se hizo hoy. Crea la racha si no existe.
+export const incrementStreak = async (): Promise<{ data: Streak; incremented: boolean }> => {
+    const response = await api.post("/streaks/increment");
+    return response.data;
 };
