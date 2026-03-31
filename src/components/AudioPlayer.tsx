@@ -18,7 +18,7 @@ export const AudioPlayer = ({
 }: AudioPlayerProps) => {
     const { audioRef, isPlaying, currentTime, duration, play, pause, seek } =
         useAudio(
-            `https://minios.dnavarro.dev/idiompace/${
+            `${import.meta.env.VITE_AUDIO_BASE_URL}/${
                 story.level
             }/${encodeURIComponent(story.title)}.mp3`
         );
